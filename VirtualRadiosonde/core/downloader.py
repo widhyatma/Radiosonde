@@ -19,9 +19,46 @@ class SoundingDownloader:
     ]
 
     FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+    GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
     def __init__(self, pressures: Optional[List[int]] = None):
         self.pressures = pressures or self.DEFAULT_PRESSURES
+
+    @staticmethod
+    def search_city(city_name: str, count: int = 5) -> List[Dict[str, Any]]:
+        """
+        Searches for city coordinates using Open-Meteo Geocoding API.
+        Returns a list of dicts: [{'name': ..., 'country': ..., 'admin1': ..., 'latitude': ..., 'longitude': ...}]
+        """
+        city_name = city_name.strip()
+        if not city_name:
+            return []
+
+        params = {
+            "name": city_name,
+            "count": count,
+            "language": "en",
+            "format": "json"
+        }
+        try:
+            res = requests.get(SoundingDownloader.GEOCODING_URL, params=params, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                results = data.get("results", [])
+                cities = []
+                for item in results:
+                    cities.append({
+                        "name": item.get("name", city_name),
+                        "country": item.get("country", ""),
+                        "admin1": item.get("admin1", ""),
+                        "latitude": float(item.get("latitude", 0.0)),
+                        "longitude": float(item.get("longitude", 0.0)),
+                        "display_name": f"{item.get('name')}, {item.get('admin1', '')} ({item.get('country', '')})"
+                    })
+                return cities
+        except Exception as e:
+            print(f"[WARNING] Geocoding API search failed for '{city_name}': {e}")
+        return []
 
     def _build_hourly_vars(self) -> List[str]:
         """Construct variable request names for Open-Meteo API."""

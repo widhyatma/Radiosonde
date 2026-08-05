@@ -3,7 +3,7 @@ Custom PySide6 Widgets for Virtual Radiosonde Plotter.
 Defines Control Panel, Parameter Display Panel, and Matplotlib Canvas Widget.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import numpy as np
 from PySide6.QtCore import Qt, Signal, QDate
 from PySide6.QtWidgets import (
@@ -22,11 +22,26 @@ from core.sounding import SoundingIndices
 
 class ControlPanelWidget(QWidget):
     """
-    Left panel widget providing inputs for coordinates, date/time, data source, and action buttons.
+    Left panel widget providing inputs for coordinates, date/time, city search, presets, and action buttons.
     """
     fetch_requested = Signal(dict)
     save_figure_requested = Signal()
     export_csv_requested = Signal()
+    open_csv_requested = Signal()
+    search_city_requested = Signal(str)
+
+    PRESET_CITIES = [
+        ("Custom Coordinates", None, None),
+        ("Kebumen", -7.6686, 109.6536),
+        ("Jakarta", -6.2088, 106.8456),
+        ("Bandung", -6.9175, 107.6191),
+        ("Surabaya", -7.2575, 112.7521),
+        ("Yogyakarta", -7.7956, 110.3695),
+        ("Medan", 3.5952, 98.6722),
+        ("Makassar", -5.1477, 119.4327),
+        ("Denpasar", -8.6705, 115.2126),
+        ("Jayapura", -2.5489, 140.7196),
+    ]
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -42,7 +57,34 @@ class ControlPanelWidget(QWidget):
         lbl_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #1e3a8a;")
         layout.addWidget(lbl_title)
 
-        # 1. Location & Time Group
+        # 1. City Search Box
+        group_search = QGroupBox("City Search & Presets")
+        search_layout = QVBoxLayout(group_search)
+        search_layout.setSpacing(8)
+
+        search_input_layout = QHBoxLayout()
+        self.txt_city_search = QLineEdit()
+        self.txt_city_search.setPlaceholderText("Search city (e.g. Bandung, Jakarta)")
+        self.btn_search_city = QPushButton("Search")
+        self.btn_search_city.setStyleSheet("background-color: #0284c7; color: white; font-weight: bold;")
+        
+        search_input_layout.addWidget(self.txt_city_search)
+        search_input_layout.addWidget(self.btn_search_city)
+
+        # Presets dropdown
+        self.combo_presets = QComboBox()
+        for name, lat, lon in self.PRESET_CITIES:
+            label = f"{name} ({lat:.2f}°, {lon:.2f}°)" if lat is not None else name
+            self.combo_presets.addItem(label)
+        self.combo_presets.setCurrentIndex(1)  # Default Kebumen
+
+        search_layout.addLayout(search_input_layout)
+        search_layout.addWidget(QLabel("Preset Location:"))
+        search_layout.addWidget(self.combo_presets)
+
+        layout.addWidget(group_search)
+
+        # 2. Location & Time Group
         group_input = QGroupBox("Target Sounding Settings")
         form = QFormLayout(group_input)
         form.setSpacing(10)
@@ -50,14 +92,12 @@ class ControlPanelWidget(QWidget):
         self.spin_lat = QDoubleSpinBox()
         self.spin_lat.setRange(-90.0, 90.0)
         self.spin_lat.setDecimals(4)
-        self.spin_lat.setValue(-7.7367)
-        self.spin_lat.setToolTip("Latitude in decimal degrees (-90 to +90)")
+        self.spin_lat.setValue(-7.6686)
 
         self.spin_lon = QDoubleSpinBox()
         self.spin_lon.setRange(-180.0, 180.0)
         self.spin_lon.setDecimals(4)
-        self.spin_lon.setValue(109.6461)
-        self.spin_lon.setToolTip("Longitude in decimal degrees (-180 to +180)")
+        self.spin_lon.setValue(109.6536)
 
         self.txt_loc_name = QLineEdit("Kebumen")
         self.txt_loc_name.setPlaceholderText("e.g. Kebumen, Jakarta")
@@ -83,7 +123,7 @@ class ControlPanelWidget(QWidget):
 
         layout.addWidget(group_input)
 
-        # 2. Action Buttons
+        # 3. Action Buttons
         group_actions = QGroupBox("Actions")
         btn_layout = QVBoxLayout(group_actions)
         btn_layout.setSpacing(8)
@@ -107,6 +147,10 @@ class ControlPanelWidget(QWidget):
             }
         """)
 
+        self.btn_open_csv = QPushButton("Open Local CSV")
+        self.btn_open_csv.setMinimumHeight(35)
+        self.btn_open_csv.setStyleSheet("font-weight: bold; color: #0f172a; background-color: #e0f2fe; border: 1px solid #0284c7;")
+
         self.btn_save_fig = QPushButton("Save Figure (PNG / PDF)")
         self.btn_save_fig.setMinimumHeight(35)
         self.btn_save_fig.setStyleSheet("font-weight: bold; color: #0f172a; background-color: #f1f5f9; border: 1px solid #94a3b8;")
@@ -116,6 +160,7 @@ class ControlPanelWidget(QWidget):
         self.btn_export_csv.setStyleSheet("font-weight: bold; color: #0f172a; background-color: #f1f5f9; border: 1px solid #94a3b8;")
 
         btn_layout.addWidget(self.btn_download)
+        btn_layout.addWidget(self.btn_open_csv)
         btn_layout.addWidget(self.btn_save_fig)
         btn_layout.addWidget(self.btn_export_csv)
 
@@ -126,6 +171,30 @@ class ControlPanelWidget(QWidget):
         self.btn_download.clicked.connect(self._on_download_clicked)
         self.btn_save_fig.clicked.connect(self.save_figure_requested.emit)
         self.btn_export_csv.clicked.connect(self.export_csv_requested.emit)
+        self.btn_open_csv.clicked.connect(self.open_csv_requested.emit)
+        
+        self.btn_search_city.clicked.connect(self._on_search_clicked)
+        self.txt_city_search.returnPressed.connect(self._on_search_clicked)
+        self.combo_presets.currentIndexChanged.connect(self._on_preset_changed)
+
+    def _on_search_clicked(self):
+        query = self.txt_city_search.text().strip()
+        if query:
+            self.search_city_requested.emit(query)
+
+    def _on_preset_changed(self, idx: int):
+        if idx >= 0 and idx < len(self.PRESET_CITIES):
+            name, lat, lon = self.PRESET_CITIES[idx]
+            if lat is not None and lon is not None:
+                self.spin_lat.setValue(lat)
+                self.spin_lon.setValue(lon)
+                self.txt_loc_name.setText(name)
+
+    def set_coordinates(self, lat: float, lon: float, name: str):
+        """Sets form fields when city search is completed."""
+        self.spin_lat.setValue(lat)
+        self.spin_lon.setValue(lon)
+        self.txt_loc_name.setText(name)
 
     def _on_download_clicked(self):
         utc_text = self.combo_utc_hour.currentText()
@@ -144,8 +213,10 @@ class ControlPanelWidget(QWidget):
 
 class ParameterDisplayWidget(QWidget):
     """
-    Right panel widget displaying calculated thermodynamic and stability parameters in high-contrast tables.
+    Right panel widget displaying calculated thermodynamic parameters, threat assessments, and copy action.
     """
+    copy_summary_requested = Signal()
+
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.init_ui()
@@ -154,20 +225,37 @@ class ParameterDisplayWidget(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(8, 8, 8, 8)
 
-        lbl_title = QLabel("📊 Sounding Parameters")
+        lbl_title = QLabel("Sounding Parameters")
         lbl_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #047857;")
         main_layout.addWidget(lbl_title)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background-color: #ffffff; border: none; }")
 
         container = QWidget()
+        container.setStyleSheet("QWidget { background-color: #ffffff; color: #0f172a; }")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
 
-        # 1. Surface & Key Levels Table
+        # 1. Severe Weather Risk Assessment Box
+        group_threat = QGroupBox("Severe Weather Threat Risk")
+        gt_layout = QVBoxLayout(group_threat)
+        gt_layout.setSpacing(6)
+
+        self.lbl_ts_threat = QLabel("Thunderstorm: N/A")
+        self.lbl_rain_threat = QLabel("Heavy Rain: N/A")
+        self.lbl_wind_threat = QLabel("Wind Shear: N/A")
+
+        for lbl in [self.lbl_ts_threat, self.lbl_rain_threat, self.lbl_wind_threat]:
+            lbl.setStyleSheet("font-weight: bold; font-size: 11px; padding: 5px; border-radius: 4px; color: #0f172a; background-color: #f1f5f9;")
+            gt_layout.addWidget(lbl)
+
+        layout.addWidget(group_threat)
+
+        # 2. Surface & Key Levels Table
         self.table_levels = self._create_param_table(["Parameter", "Pressure", "Value"])
         group_levels = QGroupBox("Surface & Lifted Levels")
         gl_layout = QVBoxLayout(group_levels)
@@ -175,7 +263,7 @@ class ParameterDisplayWidget(QWidget):
         gl_layout.addWidget(self.table_levels)
         layout.addWidget(group_levels)
 
-        # 2. Convective Energy (CAPE / CIN) Table
+        # 3. Convective Energy (CAPE / CIN) Table
         self.table_cape = self._create_param_table(["Parcel Type", "CAPE (J/kg)", "CIN (J/kg)"])
         group_cape = QGroupBox("Convective Energy")
         gc_layout = QVBoxLayout(group_cape)
@@ -183,7 +271,7 @@ class ParameterDisplayWidget(QWidget):
         gc_layout.addWidget(self.table_cape)
         layout.addWidget(group_cape)
 
-        # 3. Moisture & Stability Indices Table
+        # 4. Moisture & Stability Indices Table
         self.table_indices = self._create_param_table(["Stability Index", "Value", "Unit"])
         group_indices = QGroupBox("Stability & Severe Indices")
         gi_layout = QVBoxLayout(group_indices)
@@ -191,13 +279,40 @@ class ParameterDisplayWidget(QWidget):
         gi_layout.addWidget(self.table_indices)
         layout.addWidget(group_indices)
 
+        # Style QGroupBoxes cleanly
+        for grp in [group_threat, group_levels, group_cape, group_indices]:
+            grp.setStyleSheet("""
+                QGroupBox {
+                    font-weight: bold;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 6px;
+                    margin-top: 6px;
+                    padding-top: 10px;
+                    background-color: #ffffff;
+                    color: #0f172a;
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    padding: 0 4px;
+                    color: #1e293b;
+                }
+            """)
+
+        # Copy Summary Button
+        self.btn_copy_summary = QPushButton("Copy Summary Text")
+        self.btn_copy_summary.setMinimumHeight(35)
+        self.btn_copy_summary.setStyleSheet("font-weight: bold; color: #ffffff; background-color: #059669; border-radius: 4px;")
+        self.btn_copy_summary.clicked.connect(self.copy_summary_requested.emit)
+        layout.addWidget(self.btn_copy_summary)
+
         scroll.setWidget(container)
         main_layout.addWidget(scroll)
 
         # Set initial empty state
         self.clear_display()
 
-    def _create_param_table(self, headers: list[str]) -> QTableWidget:
+    def _create_param_table(self, headers: List[str]) -> QTableWidget:
         table = QTableWidget(0, len(headers))
         table.setHorizontalHeaderLabels(headers)
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -210,12 +325,19 @@ class ParameterDisplayWidget(QWidget):
                 font-size: 11px;
                 gridline-color: #cbd5e1;
                 background-color: #ffffff;
+                color: #0f172a;
+                border: 1px solid #cbd5e1;
+            }
+            QTableWidget::item {
+                background-color: #ffffff;
+                color: #0f172a;
+                padding: 4px;
             }
             QHeaderView::section {
                 background-color: #e2e8f0;
                 color: #0f172a;
                 font-weight: bold;
-                padding: 5px;
+                padding: 4px;
                 border: 1px solid #cbd5e1;
             }
         """)
@@ -226,8 +348,20 @@ class ParameterDisplayWidget(QWidget):
         self.update_indices(SoundingIndices())
 
     def update_indices(self, indices: SoundingIndices):
-        """Populates parameter tables with computed SoundingIndices."""
-        # 1. Levels Table
+        """Populates parameter tables and threat risks with computed SoundingIndices."""
+        # 1. Threats
+        threats = indices.get_threat_assessment()
+
+        self.lbl_ts_threat.setText(f"⚡ Thunderstorm: {threats['thunderstorm']['level']}")
+        self.lbl_ts_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['thunderstorm']['color']}; border-radius: 4px;")
+
+        self.lbl_rain_threat.setText(f"🌧️ Heavy Rain: {threats['heavy_rain']['level']}")
+        self.lbl_rain_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['heavy_rain']['color']}; border-radius: 4px;")
+
+        self.lbl_wind_threat.setText(f"🌪️ Wind Shear: {threats['wind_shear']['level']}")
+        self.lbl_wind_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['wind_shear']['color']}; border-radius: 4px;")
+
+        # 2. Levels Table
         levels_data = [
             ("Surface Temp", "-", f"{self._fmt(indices.surface_temp_c)} °C"),
             ("Surface Dewpoint", "-", f"{self._fmt(indices.surface_dewpoint_c)} °C"),
@@ -237,7 +371,7 @@ class ParameterDisplayWidget(QWidget):
         ]
         self._populate_table(self.table_levels, levels_data)
 
-        # 2. CAPE / CIN Table
+        # 3. CAPE / CIN Table
         cape_data = [
             ("Surface-Based (SB)", self._fmt(indices.sb_cape, ".0f"), self._fmt(indices.sb_cin, ".0f")),
             ("Mixed-Layer (ML)", self._fmt(indices.ml_cape, ".0f"), self._fmt(indices.ml_cin, ".0f")),
@@ -245,7 +379,7 @@ class ParameterDisplayWidget(QWidget):
         ]
         self._populate_table(self.table_cape, cape_data)
 
-        # 3. Stability Indices Table
+        # 4. Stability Indices Table
         indices_data = [
             ("Precipitable Water (PWAT)", f"{self._fmt(indices.pwat_mm, '.1f')} mm", f"({self._fmt(indices.pwat_in, '.2f')} in)"),
             ("K Index (KI)", self._fmt(indices.k_index, ".1f"), "°C"),
@@ -263,15 +397,17 @@ class ParameterDisplayWidget(QWidget):
             return "N/A"
         return f"{val:{fmt_spec}}"
 
-    def _populate_table(self, table: QTableWidget, data: list[tuple]):
+    def _populate_table(self, table: QTableWidget, data: List[tuple]):
         table.setRowCount(len(data))
         for row, row_data in enumerate(data):
             for col, item_text in enumerate(row_data):
                 item = QTableWidgetItem(str(item_text))
                 item.setTextAlignment(Qt.AlignCenter)
-                item.setForeground(Qt.GlobalColor.black)
                 table.setItem(row, col, item)
-        # Adjust height based on row count
+        row_height = 24
+        header_height = 28
+        total_height = header_height + (row_height * len(data)) + 6
+        table.setFixedHeight(total_height)
         row_height = 24
         header_height = 28
         total_height = header_height + (row_height * len(data)) + 6
@@ -289,8 +425,7 @@ class PlotCanvasWidget(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
-        # Display placeholder label until figure is loaded
-        self.lbl_placeholder = QLabel("Click 'Fetch & Plot Sounding' to generate a Skew-T diagram.")
+        self.lbl_placeholder = QLabel("Click 'Fetch & Plot Sounding' or 'Open Local CSV' to generate a Skew-T diagram.")
         self.lbl_placeholder.setAlignment(Qt.AlignCenter)
         self.lbl_placeholder.setStyleSheet("font-size: 14px; font-weight: bold; color: #475569;")
         self.layout.addWidget(self.lbl_placeholder)

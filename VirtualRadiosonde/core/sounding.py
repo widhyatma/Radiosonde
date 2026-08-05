@@ -47,6 +47,61 @@ class SoundingIndices:
         """Convert indices to a clean dictionary formatted for UI display."""
         return {k: (v if v is not None and not np.isnan(v) else np.nan) for k, v in asdict(self).items()}
 
+    def get_threat_assessment(self) -> Dict[str, Dict[str, str]]:
+        """
+        Evaluates severe weather threat levels based on thermodynamic indices.
+        Returns risk categories: Low, Moderate, High, Extreme.
+        """
+        cape = self.sb_cape if (self.sb_cape is not None and not np.isnan(self.sb_cape)) else 0.0
+        ki = self.k_index if (self.k_index is not None and not np.isnan(self.k_index)) else 0.0
+
+        if cape > 2500 or ki > 38:
+            ts_risk = "Sangat Tinggi (Extreme)"
+            ts_color = "#dc2626"
+        elif cape > 1000 or ki > 30:
+            ts_risk = "Tinggi (High)"
+            ts_color = "#ea580c"
+        elif cape > 300 or ki > 22:
+            ts_risk = "Sedang (Moderate)"
+            ts_color = "#d97706"
+        else:
+            ts_risk = "Rendah (Low)"
+            ts_color = "#16a34a"
+
+        pwat = self.pwat_mm if (self.pwat_mm is not None and not np.isnan(self.pwat_mm)) else 0.0
+        if pwat >= 55.0:
+            rain_risk = "Sangat Tinggi (Extreme)"
+            rain_color = "#dc2626"
+        elif pwat >= 40.0:
+            rain_risk = "Tinggi (High)"
+            rain_color = "#ea580c"
+        elif pwat >= 20.0:
+            rain_risk = "Sedang (Moderate)"
+            rain_color = "#d97706"
+        else:
+            rain_risk = "Rendah (Low)"
+            rain_color = "#16a34a"
+
+        srh = self.srh_0_3km if (self.srh_0_3km is not None and not np.isnan(self.srh_0_3km)) else 0.0
+        if srh > 250:
+            wind_risk = "Sangat Tinggi (Extreme)"
+            wind_color = "#dc2626"
+        elif srh > 150:
+            wind_risk = "Tinggi (High)"
+            wind_color = "#ea580c"
+        elif srh > 75:
+            wind_risk = "Sedang (Moderate)"
+            wind_color = "#d97706"
+        else:
+            wind_risk = "Rendah (Low)"
+            wind_color = "#16a34a"
+
+        return {
+            "thunderstorm": {"level": ts_risk, "color": ts_color},
+            "heavy_rain": {"level": rain_risk, "color": rain_color},
+            "wind_shear": {"level": wind_risk, "color": wind_color},
+        }
+
 
 class SoundingData:
     """
@@ -128,3 +183,89 @@ class SoundingData:
                 f.write(f"#   {key}: {val_str}\n")
             f.write("# Profile Data:\n")
         df.to_csv(filepath, mode="a", index=False)
+
+    def to_summary_text(self) -> str:
+        """Generates a clean text report for clipboard copying."""
+        idx = self.indices
+        threats = idx.get_threat_assessment()
+
+        sb_cape_str = f"{idx.sb_cape:.0f}" if idx.sb_cape is not None and not np.isnan(idx.sb_cape) else "N/A"
+        ml_cape_str = f"{idx.ml_cape:.0f}" if idx.ml_cape is not None and not np.isnan(idx.ml_cape) else "N/A"
+        mu_cape_str = f"{idx.mu_cape:.0f}" if idx.mu_cape is not None and not np.isnan(idx.mu_cape) else "N/A"
+        pwat_str = f"{idx.pwat_mm:.1f} mm ({idx.pwat_in:.2f} in)" if idx.pwat_mm is not None and not np.isnan(idx.pwat_mm) else "N/A"
+        ki_str = f"{idx.k_index:.1f} °C" if idx.k_index is not None and not np.isnan(idx.k_index) else "N/A"
+        tt_str = f"{idx.total_totals:.1f} °C" if idx.total_totals is not None and not np.isnan(idx.total_totals) else "N/A"
+        lcl_str = f"{idx.lcl_pressure_hpa:.0f} hPa ({idx.lcl_temp_c:.1f} °C)" if idx.lcl_pressure_hpa is not None and not np.isnan(idx.lcl_pressure_hpa) else "N/A"
+
+        text = (
+            f"=== LAPORAN SOUNDING ATMOSFER ===\n"
+            f"Organisasi: Jerukagung Meteorologi\n"
+            f"Lokasi: {self.location_name} ({abs(self.latitude):.2f}°, {abs(self.longitude):.2f}°)\n"
+            f"Waktu Observasi: {self.observation_time_str}\n"
+            f"Sumber Data: {self.source}\n\n"
+            f"[ INDEKS TERMODINAMIKA ]\n"
+            f"• SBCAPE    : {sb_cape_str} J/kg\n"
+            f"• MLCAPE    : {ml_cape_str} J/kg\n"
+            f"• MUCAPE    : {mu_cape_str} J/kg\n"
+            f"• PWAT      : {pwat_str}\n"
+            f"• K-INDEX   : {ki_str}\n"
+            f"• TOTALS    : {tt_str}\n"
+            f"• LCL       : {lcl_str}\n\n"
+            f"[ PENILAIAN RISIKO CUACA EKSTREM ]\n"
+            f"• Potensi Petir/Badai : {threats['thunderstorm']['level']}\n"
+            f"• Potensi Hujan Lebat : {threats['heavy_rain']['level']}\n"
+            f"• Potensi Wind Shear  : {threats['wind_shear']['level']}\n"
+        )
+        return text
+
+    @staticmethod
+    def from_csv(filepath: str) -> "SoundingData":
+        """Parses a local CSV file exported by the app or standard profile CSV."""
+        df = pd.read_csv(filepath, comment="#")
+
+        location_name = "Local CSV Data"
+        source = "Local CSV File"
+        date_str = "2026-01-01"
+        time_utc_hour = 12
+        latitude = -7.7367
+        longitude = 109.6461
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                for line in f:
+                    if not line.startswith("#"):
+                        break
+                    line_str = line.strip("# \n")
+                    if "Location:" in line_str:
+                        parts = line_str.split("Location:")[1].strip()
+                        location_name = parts.split("(")[0].strip()
+                    elif "Source:" in line_str:
+                        source = line_str.split("Source:")[1].strip()
+                    elif "Valid Time:" in line_str:
+                        vt = line_str.split("Valid Time:")[1].strip()
+                        date_str = vt.split()[0]
+                        time_utc_hour = int(vt.split()[1].split(":")[0])
+        except Exception:
+            pass
+
+        pressures = df["Pressure_hPa"].values if "Pressure_hPa" in df.columns else df.iloc[:, 0].values
+        temperatures = df["Temperature_C"].values if "Temperature_C" in df.columns else df.iloc[:, 1].values
+        dewpoints = df["Dewpoint_C"].values if "Dewpoint_C" in df.columns else temperatures
+        rh = df["RelativeHumidity_%"].values if "RelativeHumidity_%" in df.columns else np.full_like(temperatures, 80.0)
+        ws = df["WindSpeed_kmh"].values if "WindSpeed_kmh" in df.columns else np.zeros_like(temperatures)
+        wd = df["WindDir_deg"].values if "WindDir_deg" in df.columns else np.zeros_like(temperatures)
+
+        return SoundingData(
+            pressures=pressures,
+            temperatures=temperatures,
+            dewpoints=dewpoints,
+            relative_humidity=rh,
+            wind_speeds=ws,
+            wind_directions=wd,
+            latitude=latitude,
+            longitude=longitude,
+            date_str=date_str,
+            time_utc_hour=time_utc_hour,
+            location_name=location_name,
+            source=source
+        )

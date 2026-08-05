@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QSplitter,
     QFileDialog, QProgressBar, QLabel, QMenuBar, QMenu
 )
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtGui import QAction, QIcon, QGuiApplication
 
 from .widgets import ControlPanelWidget, ParameterDisplayWidget, PlotCanvasWidget
 from .dialogs import AboutDialog, ExportDialog, show_error_dialog, show_info_dialog
@@ -138,6 +138,64 @@ class MainWindow(QMainWindow):
         self.control_panel.fetch_requested.connect(self.start_fetch_sounding)
         self.control_panel.save_figure_requested.connect(self.save_figure)
         self.control_panel.export_csv_requested.connect(self.export_csv)
+        self.control_panel.open_csv_requested.connect(self.handle_open_csv)
+        self.control_panel.search_city_requested.connect(self.handle_city_search)
+        self.param_panel.copy_summary_requested.connect(self.handle_copy_summary)
+
+    def handle_city_search(self, city_name: str):
+        """Searches coordinates for city_name and updates form fields."""
+        self.lbl_status.setText(f"Searching coordinates for '{city_name}'...")
+        cities = SoundingDownloader.search_city(city_name)
+        if not cities:
+            show_error_dialog(self, "City Not Found", f"No matching coordinates found for '{city_name}'.")
+            self.lbl_status.setText("Ready")
+            return
+
+        best = cities[0]
+        self.control_panel.set_coordinates(best["latitude"], best["longitude"], best["name"])
+        self.lbl_status.setText(f"Found city: {best['display_name']}")
+        show_info_dialog(
+            self,
+            "City Search Result",
+            f"Found location for '{best['name']}':\n"
+            f"Latitude: {best['latitude']:.4f}°\n"
+            f"Longitude: {best['longitude']:.4f}°\n"
+            f"Region/Country: {best['admin1']}, {best['country']}"
+        )
+
+    def handle_open_csv(self):
+        """Opens and plots local sounding CSV data file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open Local Sounding CSV Data", "", "CSV Files (*.csv);;All Files (*)"
+        )
+        if not file_path:
+            return
+
+        try:
+            self.lbl_status.setText(f"Reading local CSV file: {file_path}...")
+            sounding = SoundingData.from_csv(file_path)
+            sounding = SoundingCalculator.process_sounding(sounding)
+            self.current_sounding = sounding
+
+            fig = SkewTPlotter.create_skewt_figure(sounding, dark_mode=self.dark_mode)
+            self.canvas_widget.set_figure(fig)
+            self.param_panel.update_indices(sounding.indices)
+
+            self.lbl_status.setText(f"Loaded local CSV sounding: {sounding.location_name}")
+            show_info_dialog(self, "Local CSV Loaded", f"Successfully loaded and plotted sounding data from:\n{file_path}")
+        except Exception as e:
+            show_error_dialog(self, "CSV Loading Error", f"Failed to load CSV file:\n{e}")
+            self.lbl_status.setText("Ready")
+
+    def handle_copy_summary(self):
+        """Copies formatted atmospheric sounding summary to clipboard."""
+        if not self.current_sounding:
+            show_error_dialog(self, "No Active Sounding", "Please fetch or open a sounding profile before copying summary text.")
+            return
+
+        text = self.current_sounding.to_summary_text()
+        QGuiApplication.clipboard().setText(text)
+        show_info_dialog(self, "Summary Copied", "Atmospheric sounding summary text has been copied to your clipboard!")
 
     def create_menus(self):
         menu_bar = self.menuBar()
