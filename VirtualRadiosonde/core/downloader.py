@@ -15,7 +15,7 @@ class SoundingDownloader:
     Downloads vertical sounding data for specified coordinates and date/time.
     """
     DEFAULT_PRESSURES: List[int] = [
-        1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100
+        1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30
     ]
 
     FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
