@@ -15,6 +15,16 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
 
 from ui.main_window import MainWindow
+from ui.icon_utils import load_app_icon
+
+# Set Windows Taskbar AppUserModelID so the logo icon shows on Taskbar
+import ctypes
+try:
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+        "JerukagungMeteorologi.VirtualRadiosondePlotter.1.0"
+    )
+except Exception:
+    pass
 
 
 def apply_app_stylesheet(app: QApplication):
@@ -185,6 +195,11 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Virtual Radiosonde Plotter")
     app.setOrganizationName("Jerukagung Meteorologi")
+
+    # Set Window & Taskbar Favicon Icon
+    app_icon = load_app_icon()
+    if not app_icon.isNull():
+        app.setWindowIcon(app_icon)
 
     # Set Application Font
     font = QFont("Segoe UI", 9)

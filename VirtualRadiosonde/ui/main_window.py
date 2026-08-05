@@ -14,6 +14,7 @@ from PySide6.QtGui import QAction, QIcon
 
 from .widgets import ControlPanelWidget, ParameterDisplayWidget, PlotCanvasWidget
 from .dialogs import AboutDialog, ExportDialog, show_error_dialog, show_info_dialog
+from .icon_utils import load_app_icon
 from core.sounding import SoundingData
 from core.downloader import SoundingDownloader
 from core.calculations import SoundingCalculator
@@ -76,6 +77,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Virtual Radiosonde Plotter")
         self.resize(1280, 800)
+
+        app_icon = load_app_icon()
+        if not app_icon.isNull():
+            self.setWindowIcon(app_icon)
 
         self.current_sounding: Optional[SoundingData] = None
         self.dark_mode = False
