@@ -362,10 +362,12 @@ class ParameterDisplayWidget(QWidget):
         self.lbl_wind_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['wind_shear']['color']}; border-radius: 4px;")
 
         # 2. Levels Table
+        cbh_val = f"{self._fmt(indices.lcl_height_m, '.0f')} m ({self._fmt(indices.lcl_height_ft, '.0f')} ft)"
         levels_data = [
             ("Surface Temp", "-", f"{self._fmt(indices.surface_temp_c)} °C"),
             ("Surface Dewpoint", "-", f"{self._fmt(indices.surface_dewpoint_c)} °C"),
             ("LCL (Lifted Cond.)", f"{self._fmt(indices.lcl_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lcl_temp_c)} °C"),
+            ("Cloud Base Height", f"{self._fmt(indices.lcl_pressure_hpa, '.0f')} hPa", cbh_val),
             ("LFC (Free Conv.)", f"{self._fmt(indices.lfc_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lfc_temp_c)} °C"),
             ("EL (Equilibrium)", f"{self._fmt(indices.el_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.el_temp_c)} °C"),
         ]

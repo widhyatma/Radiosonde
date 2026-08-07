@@ -61,14 +61,26 @@ class SoundingCalculator:
         indices.surface_temp_c = float(T_arr[0].magnitude)
         indices.surface_dewpoint_c = float(Td_arr[0].magnitude)
 
-        # LCL
+        # LCL & Cloud Base Height
         try:
             lcl_p, lcl_t = mpcalc.lcl(p_arr[0], T_arr[0], Td_arr[0])
             indices.lcl_pressure_hpa = float(lcl_p.to(units.hPa).magnitude)
             indices.lcl_temp_c = float(lcl_t.to(units.degC).magnitude)
+
+            p0 = float(p_arr[0].to(units.hPa).magnitude)
+            plcl = indices.lcl_pressure_hpa
+            if plcl > 0 and p0 > 0:
+                h_m = 44330.0 * (1.0 - (plcl / p0) ** 0.1903)
+                indices.lcl_height_m = float(h_m)
+                indices.lcl_height_ft = float(h_m * 3.28084)
+            else:
+                indices.lcl_height_m = np.nan
+                indices.lcl_height_ft = np.nan
         except Exception:
             indices.lcl_pressure_hpa = np.nan
             indices.lcl_temp_c = np.nan
+            indices.lcl_height_m = np.nan
+            indices.lcl_height_ft = np.nan
 
         # LFC & EL
         try:

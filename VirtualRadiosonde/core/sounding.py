@@ -17,6 +17,8 @@ class SoundingIndices:
     
     lcl_pressure_hpa: Optional[float] = None
     lcl_temp_c: Optional[float] = None
+    lcl_height_m: Optional[float] = None
+    lcl_height_ft: Optional[float] = None
     
     lfc_pressure_hpa: Optional[float] = None
     lfc_temp_c: Optional[float] = None
@@ -184,6 +186,89 @@ class SoundingData:
             f.write("# Profile Data:\n")
         df.to_csv(filepath, mode="a", index=False)
 
+    def to_raob_csv(self, filepath: str) -> None:
+        """Exports sounding data in RAOB software compliant CSV format."""
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(f"# RAOB Software Compatible Sounding Data\n")
+            f.write(f"# Station: {self.location_name}\n")
+            f.write(f"# Latitude: {self.latitude:.4f}\n")
+            f.write(f"# Longitude: {self.longitude:.4f}\n")
+            f.write(f"# Date: {self.date_str}\n")
+            f.write(f"# Time: {self.time_utc_hour:02d}:00 UTC\n")
+            f.write(f"# Source: {self.source}\n")
+            f.write("PRES,HGHT,TEMP,DWPT,DIR,SPD,RH\n")
+            
+            # Approximate height estimation from standard pressure levels if height not explicitly present
+            heights = 44330.0 * (1.0 - (self.pressures / 1013.25) ** 0.1903)
+            ws_kt = self.wind_speeds / 1.852 if self.wind_speeds is not None else np.zeros_like(self.pressures)
+            
+            for p, h, t, td, wd, ws, rh in zip(
+                self.pressures, heights, self.temperatures, self.dewpoints,
+                self.wind_directions, ws_kt, self.relative_humidity
+            ):
+                f.write(f"{p:.1f},{h:.0f},{t:.1f},{td:.1f},{wd:.0f},{ws:.1f},{rh:.1f}\n")
+
+    def to_raob_txt(self, filepath: str) -> None:
+        """Exports sounding data in RAOB / NOAA fixed-width ASCII text format."""
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(f"TITLE = Jerukagung Meteorologi RAOB Sounding Data\n")
+            f.write(f"STATION = {self.location_name}\n")
+            f.write(f"LAT = {self.latitude:.4f}\n")
+            f.write(f"LON = {self.longitude:.4f}\n")
+            f.write(f"DATE = {self.date_str}\n")
+            f.write(f"TIME = {self.time_utc_hour:02d}:00 UTC\n")
+            f.write(f"SOURCE = {self.source}\n\n")
+            f.write(f"  PRES    HGHT    TEMP    DWPT    WDIR    WSPD      RH\n")
+            f.write(f"   hPa       m       C       C     deg      kt       %\n")
+            heights = 44330.0 * (1.0 - (self.pressures / 1013.25) ** 0.1903)
+            ws_kt = self.wind_speeds / 1.852 if self.wind_speeds is not None else np.zeros_like(self.pressures)
+
+            for p, h, t, td, wd, ws, rh in zip(
+                self.pressures, heights, self.temperatures, self.dewpoints,
+                self.wind_directions, ws_kt, self.relative_humidity
+            ):
+                f.write(f"{p:6.1f}  {h:6.0f}  {t:6.1f}  {td:6.1f}  {wd:6.0f}  {ws:6.1f}  {rh:6.1f}\n")
+
+    def to_raob_env(self, filepath: str) -> None:
+        """
+        Exports sounding data in native RAOB .ENV / .RAW file format.
+        Structure recognized natively by RAOB software import wizard.
+        """
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(f"RAOB\n")
+            f.write(f"{self.location_name.upper()} ID {self.latitude:.2f} {self.longitude:.2f} 29m {self.date_str} {self.time_utc_hour:02d}:00UTC\n")
+            f.write(f"PRES(hPa) HGHT(m) TEMP(C) DWPT(C) WDIR(deg) WSPD(kt) RH(%)\n")
+            
+            heights = 44330.0 * (1.0 - (self.pressures / 1013.25) ** 0.1903)
+            ws_kt = self.wind_speeds / 1.852 if self.wind_speeds is not None else np.zeros_like(self.pressures)
+
+            for p, h, t, td, wd, ws, rh in zip(
+                self.pressures, heights, self.temperatures, self.dewpoints,
+                self.wind_directions, ws_kt, self.relative_humidity
+            ):
+                f.write(f"{p:7.1f} {h:6.0f} {t:6.1f} {td:6.1f} {wd:5.0f} {ws:5.1f} {rh:5.1f}\n")
+
+    def to_raob_rsf(self, filepath: str) -> None:
+        """
+        Exports sounding data in native RAOB Sounding Format (.RSF).
+        Format specifically recognized by RAOB software (.rsf).
+        """
+        with open(filepath, "w", encoding="utf-8") as f:
+            date_clean = self.date_str.replace("-", "")
+            time_clean = f"{self.time_utc_hour:02d}00"
+            f.write("RSF\n")
+            f.write(f"99999,{self.latitude:.4f},{self.longitude:.4f},29,{date_clean},{time_clean},{self.location_name.upper()}\n")
+            f.write("PRES,HGHT,TEMP,DWPT,WDIR,WSPD,RH\n")
+
+            heights = 44330.0 * (1.0 - (self.pressures / 1013.25) ** 0.1903)
+            ws_kt = self.wind_speeds / 1.852 if self.wind_speeds is not None else np.zeros_like(self.pressures)
+
+            for p, h, t, td, wd, ws, rh in zip(
+                self.pressures, heights, self.temperatures, self.dewpoints,
+                self.wind_directions, ws_kt, self.relative_humidity
+            ):
+                f.write(f"{p:.1f},{h:.0f},{t:.1f},{td:.1f},{wd:.0f},{ws:.1f},{rh:.1f}\n")
+
     def to_summary_text(self) -> str:
         """Generates a clean text report for clipboard copying."""
         idx = self.indices
@@ -196,6 +281,7 @@ class SoundingData:
         ki_str = f"{idx.k_index:.1f} °C" if idx.k_index is not None and not np.isnan(idx.k_index) else "N/A"
         tt_str = f"{idx.total_totals:.1f} °C" if idx.total_totals is not None and not np.isnan(idx.total_totals) else "N/A"
         lcl_str = f"{idx.lcl_pressure_hpa:.0f} hPa ({idx.lcl_temp_c:.1f} °C)" if idx.lcl_pressure_hpa is not None and not np.isnan(idx.lcl_pressure_hpa) else "N/A"
+        cbh_str = f"{idx.lcl_height_m:.0f} m ({idx.lcl_height_ft:.0f} ft)" if idx.lcl_height_m is not None and not np.isnan(idx.lcl_height_m) else "N/A"
 
         text = (
             f"=== LAPORAN SOUNDING ATMOSFER ===\n"
@@ -204,13 +290,14 @@ class SoundingData:
             f"Waktu Observasi: {self.observation_time_str}\n"
             f"Sumber Data: {self.source}\n\n"
             f"[ INDEKS TERMODINAMIKA ]\n"
-            f"• SBCAPE    : {sb_cape_str} J/kg\n"
-            f"• MLCAPE    : {ml_cape_str} J/kg\n"
-            f"• MUCAPE    : {mu_cape_str} J/kg\n"
-            f"• PWAT      : {pwat_str}\n"
-            f"• K-INDEX   : {ki_str}\n"
-            f"• TOTALS    : {tt_str}\n"
-            f"• LCL       : {lcl_str}\n\n"
+            f"• SBCAPE            : {sb_cape_str} J/kg\n"
+            f"• MLCAPE            : {ml_cape_str} J/kg\n"
+            f"• MUCAPE            : {mu_cape_str} J/kg\n"
+            f"• PWAT              : {pwat_str}\n"
+            f"• K-INDEX           : {ki_str}\n"
+            f"• TOTALS            : {tt_str}\n"
+            f"• LCL Pressure/Temp : {lcl_str}\n"
+            f"• TINGGI BASIS AWAN : {cbh_str}\n\n"
             f"[ PENILAIAN RISIKO CUACA EKSTREM ]\n"
             f"• Potensi Petir/Badai : {threats['thunderstorm']['level']}\n"
             f"• Potensi Hujan Lebat : {threats['heavy_rain']['level']}\n"

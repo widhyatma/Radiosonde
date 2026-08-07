@@ -289,21 +289,32 @@ class MainWindow(QMainWindow):
                     show_error_dialog(self, "Save Error", f"Failed to save figure: {e}")
 
     def export_csv(self):
-        """Exports profile data and indices to CSV file."""
+        """Exports profile data and indices to CSV or RAOB compatible text/CSV files."""
         if self.current_sounding is None:
-            show_info_dialog(self, "No Sounding Data", "Please fetch and plot a sounding before exporting CSV data.")
+            show_info_dialog(self, "No Sounding Data", "Please fetch and plot a sounding before exporting data.")
             return
 
-        default_filename = f"sounding_{self.current_sounding.location_name.lower().replace(' ', '_')}_{self.current_sounding.date_str}.csv"
-        filepath, _ = QFileDialog.getSaveFileName(self, "Export Sounding CSV", default_filename, "CSV Files (*.csv)")
+        default_filename = f"sounding_{self.current_sounding.location_name.lower().replace(' ', '_')}_{self.current_sounding.date_str}.rsf"
+        file_filter = "RAOB Sounding Format (*.rsf);;RAOB Native ENV Format (*.env);;RAOB Compatible CSV (*.csv);;RAOB / NOAA Sounding Text (*.txt);;Standard App CSV (*.csv);;All Files (*)"
+        filepath, selected_filter = QFileDialog.getSaveFileName(self, "Export Sounding Data (RAOB RSF / ENV / CSV)", default_filename, file_filter)
 
         if filepath:
             try:
-                self.current_sounding.to_csv(filepath)
-                self.lbl_status.setText(f"CSV data exported to {os.path.basename(filepath)}")
-                show_info_dialog(self, "Export Successful", f"Sounding data successfully exported to:\n{filepath}")
+                if "RAOB Sounding Format (*.rsf)" in selected_filter or filepath.endswith(".rsf"):
+                    self.current_sounding.to_raob_rsf(filepath)
+                elif "RAOB Native ENV" in selected_filter or filepath.endswith(".env"):
+                    self.current_sounding.to_raob_env(filepath)
+                elif "RAOB Compatible CSV" in selected_filter:
+                    self.current_sounding.to_raob_csv(filepath)
+                elif "RAOB / NOAA Sounding Text" in selected_filter or filepath.endswith(".txt") or filepath.endswith(".raob"):
+                    self.current_sounding.to_raob_txt(filepath)
+                else:
+                    self.current_sounding.to_csv(filepath)
+
+                self.lbl_status.setText(f"Data exported to {os.path.basename(filepath)}")
+                show_info_dialog(self, "Export Successful", f"Sounding data successfully exported in RAOB RSF format to:\n{filepath}")
             except Exception as e:
-                show_error_dialog(self, "Export Error", f"Failed to export CSV: {e}")
+                show_error_dialog(self, "Export Error", f"Failed to export sounding data: {e}")
 
     def toggle_dark_theme(self):
         """Toggles dark theme for figure rendering."""

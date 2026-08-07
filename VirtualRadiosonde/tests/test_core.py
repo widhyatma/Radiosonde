@@ -60,8 +60,10 @@ def test_sounding_workflow():
     threats = idx.get_threat_assessment()
 
     print(f"      Calculated SBCAPE: {idx.sb_cape:.1f} J/kg, PWAT: {idx.pwat_mm:.1f} mm, K-Index: {idx.k_index:.1f}")
+    print(f"      Cloud Base Height (LCL): {idx.lcl_height_m:.1f} m ({idx.lcl_height_ft:.1f} ft)")
     print(f"      Threat Assessment -> Thunderstorm: {threats['thunderstorm']['level']}, Heavy Rain: {threats['heavy_rain']['level']}")
     assert idx.surface_temp_c is not None, "Surface temp is None!"
+    assert idx.lcl_height_m is not None and idx.lcl_height_m > 0, "Cloud base height calculation failed!"
     assert "thunderstorm" in threats, "Threat assessment missing thunderstorm risk!"
 
     print("[4/6] Testing SkewTPlotter...")
@@ -84,6 +86,44 @@ def test_sounding_workflow():
 
     os.remove(test_csv_path)
     print("      CSV export and parser verified.")
+
+    print("[7/7] Testing RAOB (.RSF), (.ENV), CSV & ASCII Text Exporters...")
+    test_raob_rsf = os.path.join(BASE_DIR, "test_raob.rsf")
+    test_raob_env = os.path.join(BASE_DIR, "test_raob.env")
+    test_raob_csv = os.path.join(BASE_DIR, "test_raob.csv")
+    test_raob_txt = os.path.join(BASE_DIR, "test_raob.txt")
+
+    sounding.to_raob_rsf(test_raob_rsf)
+    sounding.to_raob_env(test_raob_env)
+    sounding.to_raob_csv(test_raob_csv)
+    sounding.to_raob_txt(test_raob_txt)
+
+    assert os.path.exists(test_raob_rsf), "RAOB RSF file was not created!"
+    assert os.path.exists(test_raob_env), "RAOB ENV file was not created!"
+    assert os.path.exists(test_raob_csv), "RAOB CSV file was not created!"
+    assert os.path.exists(test_raob_txt), "RAOB TXT file was not created!"
+
+    with open(test_raob_rsf, "r", encoding="utf-8") as f:
+        content = f.read()
+        assert "RSF" in content, "RAOB RSF missing header!"
+
+    with open(test_raob_env, "r", encoding="utf-8") as f:
+        content = f.read()
+        assert "RAOB" in content, "RAOB ENV missing header!"
+
+    with open(test_raob_csv, "r", encoding="utf-8") as f:
+        content = f.read()
+        assert "PRES,HGHT,TEMP,DWPT,DIR,SPD,RH" in content, "RAOB CSV missing header!"
+
+    with open(test_raob_txt, "r", encoding="utf-8") as f:
+        content = f.read()
+        assert "Jerukagung Meteorologi RAOB Sounding Data" in content, "RAOB TXT missing header!"
+
+    os.remove(test_raob_rsf)
+    os.remove(test_raob_env)
+    os.remove(test_raob_csv)
+    os.remove(test_raob_txt)
+    print("      RAOB RSF, ENV, CSV & TXT exporters verified successfully.")
 
     print("\n[SUCCESS] ALL CORE INTEGRATION TESTS PASSED SUCCESSFULLY!")
 
