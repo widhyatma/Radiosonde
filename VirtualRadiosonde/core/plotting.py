@@ -6,7 +6,6 @@ matching the exact rason.ipynb (TropicalTidbits style) standard.
 
 from typing import Optional, Tuple
 import matplotlib
-matplotlib.use("QtAgg")  # Ensure QtAgg backend compatibility
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np

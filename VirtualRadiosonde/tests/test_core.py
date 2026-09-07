@@ -5,6 +5,10 @@ Verifies downloader, geocoding search, MetPy calculations, threat assessments, p
 
 import os
 import sys
+from datetime import datetime, timedelta
+
+import matplotlib
+matplotlib.use('Agg')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
@@ -26,7 +30,7 @@ def test_sounding_workflow():
     print("[2/6] Testing SoundingDownloader Profile Fetching...")
     downloader = SoundingDownloader()
     lat, lon = cities[0]["latitude"], cities[0]["longitude"]
-    date_str = "2026-08-04"
+    date_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     utc_hour = 12
 
     pressures, temp_list, rh_list, ws_list, wd_list, valid_time_str = downloader.fetch_sounding(
