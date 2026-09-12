@@ -66,7 +66,7 @@ class ControlPanelWidget(QWidget):
         self.txt_city_search = QLineEdit()
         self.txt_city_search.setPlaceholderText("Search city (e.g. Bandung, Jakarta)")
         self.btn_search_city = QPushButton("Search")
-        self.btn_search_city.setStyleSheet("background-color: #0284c7; color: white; font-weight: bold;")
+        self.btn_search_city.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
         
         search_input_layout.addWidget(self.txt_city_search)
         search_input_layout.addWidget(self.btn_search_city)
@@ -129,35 +129,41 @@ class ControlPanelWidget(QWidget):
         btn_layout.setSpacing(8)
 
         self.btn_download = QPushButton("Fetch & Plot Sounding")
-        self.btn_download.setMinimumHeight(40)
+        self.btn_download.setMinimumHeight(36)
         self.btn_download.setStyleSheet("""
             QPushButton {
-                background-color: #1d4ed8;
+                background-color: #0055ea;
                 color: #ffffff;
                 font-weight: bold;
-                font-size: 13px;
-                border-radius: 6px;
+                font-size: 12px;
+                border: 2px outset #0055ea;
+                border-radius: 0px;
             }
             QPushButton:hover {
-                background-color: #1e40af;
+                background-color: #1e70ff;
+            }
+            QPushButton:pressed {
+                border: 2px inset #003c74;
+                background-color: #003c74;
             }
             QPushButton:disabled {
-                background-color: #94a3b8;
-                color: #ffffff;
+                background-color: #d4d0c8;
+                color: #888888;
+                border: 2px outset #d4d0c8;
             }
         """)
 
         self.btn_open_csv = QPushButton("Open Local CSV")
-        self.btn_open_csv.setMinimumHeight(35)
-        self.btn_open_csv.setStyleSheet("font-weight: bold; color: #0f172a; background-color: #e0f2fe; border: 1px solid #0284c7;")
+        self.btn_open_csv.setMinimumHeight(30)
+        self.btn_open_csv.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
 
         self.btn_save_fig = QPushButton("Save Figure (PNG / PDF)")
-        self.btn_save_fig.setMinimumHeight(35)
-        self.btn_save_fig.setStyleSheet("font-weight: bold; color: #0f172a; background-color: #f1f5f9; border: 1px solid #94a3b8;")
+        self.btn_save_fig.setMinimumHeight(30)
+        self.btn_save_fig.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
 
         self.btn_export_csv = QPushButton("Export CSV Data")
-        self.btn_export_csv.setMinimumHeight(35)
-        self.btn_export_csv.setStyleSheet("font-weight: bold; color: #0f172a; background-color: #f1f5f9; border: 1px solid #94a3b8;")
+        self.btn_export_csv.setMinimumHeight(30)
+        self.btn_export_csv.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
 
         btn_layout.addWidget(self.btn_download)
         btn_layout.addWidget(self.btn_open_csv)
@@ -279,8 +285,8 @@ class ParameterDisplayWidget(QWidget):
 
         # Copy Summary Button
         self.btn_copy_summary = QPushButton("📋 Copy Summary Text")
-        self.btn_copy_summary.setMinimumHeight(35)
-        self.btn_copy_summary.setStyleSheet("font-weight: bold; color: #ffffff; background-color: #059669; border-radius: 4px;")
+        self.btn_copy_summary.setMinimumHeight(32)
+        self.btn_copy_summary.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: bold; background-color: #ece9d8; color: #000000;")
         self.btn_copy_summary.clicked.connect(self.copy_summary_requested.emit)
         layout.addWidget(self.btn_copy_summary)
 

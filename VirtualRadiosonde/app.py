@@ -28,159 +28,151 @@ except Exception:
 
 
 def apply_app_stylesheet(app: QApplication):
-    """Applies a modern, high-contrast, clean styling theme to the Qt Application."""
+    """Applies a classic Windows XP / Windows Classic square & boxy styling theme."""
     qss = """
     QMainWindow {
-        background-color: #f8fafc;
+        background-color: #ece9d8;
     }
     QWidget {
-        font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-        color: #0f172a;
+        font-family: 'Tahoma', 'Segoe UI', sans-serif;
+        font-size: 11px;
+        color: #000000;
     }
     QLabel {
-        color: #0f172a;
-        font-weight: 500;
+        color: #000000;
     }
     QGroupBox {
         font-weight: bold;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        margin-top: 10px;
-        padding-top: 12px;
-        background-color: #ffffff;
-        color: #0f172a;
+        border: 1px solid #919b9c;
+        border-radius: 0px;
+        margin-top: 8px;
+        padding-top: 10px;
+        background-color: transparent;
+        color: #000000;
     }
     QGroupBox::title {
         subcontrol-origin: margin;
         subcontrol-position: top left;
-        padding: 0 6px;
-        color: #1e293b;
+        padding: 0 4px;
+        color: #000000;
     }
     QLineEdit, QDoubleSpinBox, QDateEdit, QComboBox {
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        padding: 6px;
+        border: 1px solid #7f9db9;
+        border-radius: 0px;
+        padding: 3px 5px;
         background-color: #ffffff;
-        color: #0f172a;
-        font-weight: 600;
+        color: #000000;
     }
     QLineEdit:focus, QDoubleSpinBox:focus, QDateEdit:focus, QComboBox:focus {
-        border: 2px solid #2563eb;
+        border: 1px solid #003c74;
     }
 
-    /* ComboBox & Dropdown Selectors */
+    /* ComboBox */
     QComboBox QAbstractItemView {
         background-color: #ffffff;
-        color: #0f172a;
-        selection-background-color: #2563eb;
+        color: #000000;
+        selection-background-color: #316ac5;
         selection-color: #ffffff;
-        border: 1px solid #cbd5e1;
+        border: 1px solid #7f9db9;
+        border-radius: 0px;
         outline: none;
-        padding: 4px;
-    }
-    QComboBox QAbstractItemView::item {
-        color: #0f172a;
-        min-height: 26px;
-        padding: 4px 8px;
     }
     QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {
-        background-color: #2563eb;
+        background-color: #316ac5;
         color: #ffffff;
-        font-weight: bold;
     }
 
-    /* Menu Bar (File, View, Help) */
+    /* Menu Bar */
     QMenuBar {
-        background-color: #1e293b;
-        color: #f8fafc;
-        font-weight: bold;
-        font-size: 12px;
-        padding: 2px 4px;
-        border-bottom: 1px solid #0f172a;
+        background-color: #ece9d8;
+        color: #000000;
+        font-size: 11px;
+        border-bottom: 1px solid #919b9c;
     }
     QMenuBar::item {
         background-color: transparent;
-        color: #f8fafc;
-        padding: 6px 12px;
-        border-radius: 4px;
+        color: #000000;
+        padding: 3px 8px;
+        border-radius: 0px;
     }
     QMenuBar::item:selected, QMenuBar::item:pressed {
-        background-color: #2563eb;
+        background-color: #316ac5;
         color: #ffffff;
     }
 
-    /* Dropdown Menus (File -> Save, View -> Dark Theme, Help -> About) */
+    /* Menus */
     QMenu {
         background-color: #ffffff;
-        color: #0f172a;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 4px;
+        color: #000000;
+        border: 1px solid #919b9c;
+        border-radius: 0px;
+        padding: 2px;
     }
     QMenu::item {
-        background-color: transparent;
-        color: #0f172a;
-        font-weight: 500;
-        padding: 6px 24px 6px 12px;
-        border-radius: 4px;
+        padding: 4px 20px 4px 10px;
+        border-radius: 0px;
     }
     QMenu::item:selected {
-        background-color: #2563eb;
+        background-color: #316ac5;
         color: #ffffff;
-        font-weight: bold;
     }
     QMenu::separator {
         height: 1px;
-        background-color: #e2e8f0;
-        margin: 4px 8px;
+        background-color: #d4d0c8;
+        margin: 2px 4px;
     }
 
-    /* Buttons */
+    /* Classic Boxy Buttons */
     QPushButton {
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        padding: 6px 12px;
-        background-color: #ffffff;
-        color: #0f172a;
-        font-weight: 600;
+        border: 2px outset #d4d0c8;
+        border-radius: 0px;
+        padding: 4px 12px;
+        background-color: #ece9d8;
+        color: #000000;
+        font-weight: normal;
     }
     QPushButton:hover {
-        background-color: #f1f5f9;
-        border-color: #64748b;
+        background-color: #f5f4ea;
     }
+    QPushButton:pressed {
+        border: 2px inset #d4d0c8;
+        background-color: #e2dfce;
+    }
+    QPushButton:disabled {
+        color: #888888;
+        border-color: #d4d0c8;
+    }
+
+    /* Table Widget */
     QTableWidget {
         background-color: #ffffff;
-        color: #0f172a;
-        gridline-color: #cbd5e1;
+        color: #000000;
+        gridline-color: #d4d0c8;
+        border: 1px solid #7f9db9;
+        border-radius: 0px;
         font-size: 11px;
     }
     QTableWidget::item {
-        color: #0f172a;
-        padding: 4px;
+        color: #000000;
+        padding: 3px;
+        border-radius: 0px;
     }
     QHeaderView::section {
-        background-color: #e2e8f0;
-        color: #0f172a;
+        background-color: #ece9d8;
+        color: #000000;
         font-weight: bold;
-        padding: 5px;
-        border: 1px solid #cbd5e1;
+        padding: 4px;
+        border: 1px solid #919b9c;
+        border-radius: 0px;
     }
-    QMessageBox, QDialog {
-        background-color: #ffffff;
-        color: #0f172a;
-    }
-    QMessageBox QLabel, QDialog QLabel {
-        color: #0f172a;
-        font-weight: 500;
-    }
+
     QStatusBar {
-        background-color: #e2e8f0;
-        color: #0f172a;
-        font-weight: 500;
+        background-color: #ece9d8;
+        border-top: 1px solid #919b9c;
+        color: #000000;
     }
     QStatusBar QLabel {
-        color: #0f172a;
-        font-weight: 600;
+        color: #000000;
     }
     """
     app.setStyleSheet(qss)
@@ -196,13 +188,16 @@ def main():
     app.setApplicationName("Virtual Radiosonde Plotter")
     app.setOrganizationName("Jerukagung Meteorologi")
 
+    # Set Classic Windows Engine ('Windows' / 'Fusion')
+    app.setStyle("Windows")
+
     # Set Window & Taskbar Favicon Icon
     app_icon = load_app_icon()
     if not app_icon.isNull():
         app.setWindowIcon(app_icon)
 
-    # Set Application Font
-    font = QFont("Segoe UI", 9)
+    # Set Classic Windows XP Font (Tahoma)
+    font = QFont("Tahoma", 9)
     app.setFont(font)
 
     apply_app_stylesheet(app)
