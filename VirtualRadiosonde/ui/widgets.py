@@ -232,10 +232,8 @@ class ParameterDisplayWidget(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background-color: #ffffff; border: none; }")
 
         container = QWidget()
-        container.setStyleSheet("QWidget { background-color: #ffffff; color: #0f172a; }")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
@@ -250,7 +248,7 @@ class ParameterDisplayWidget(QWidget):
         self.lbl_wind_threat = QLabel("Wind Shear: N/A")
 
         for lbl in [self.lbl_ts_threat, self.lbl_rain_threat, self.lbl_wind_threat]:
-            lbl.setStyleSheet("font-weight: bold; font-size: 11px; padding: 5px; border-radius: 4px; color: #0f172a; background-color: #f1f5f9;")
+            lbl.setStyleSheet("font-weight: bold; font-size: 11px; padding: 4px; border-radius: 4px;")
             gt_layout.addWidget(lbl)
 
         layout.addWidget(group_threat)
@@ -279,28 +277,8 @@ class ParameterDisplayWidget(QWidget):
         gi_layout.addWidget(self.table_indices)
         layout.addWidget(group_indices)
 
-        # Style QGroupBoxes cleanly
-        for grp in [group_threat, group_levels, group_cape, group_indices]:
-            grp.setStyleSheet("""
-                QGroupBox {
-                    font-weight: bold;
-                    border: 1px solid #cbd5e1;
-                    border-radius: 6px;
-                    margin-top: 6px;
-                    padding-top: 10px;
-                    background-color: #ffffff;
-                    color: #0f172a;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    subcontrol-position: top left;
-                    padding: 0 4px;
-                    color: #1e293b;
-                }
-            """)
-
         # Copy Summary Button
-        self.btn_copy_summary = QPushButton("Copy Summary Text")
+        self.btn_copy_summary = QPushButton("📋 Copy Summary Text")
         self.btn_copy_summary.setMinimumHeight(35)
         self.btn_copy_summary.setStyleSheet("font-weight: bold; color: #ffffff; background-color: #059669; border-radius: 4px;")
         self.btn_copy_summary.clicked.connect(self.copy_summary_requested.emit)
@@ -323,22 +301,10 @@ class ParameterDisplayWidget(QWidget):
         table.setStyleSheet("""
             QTableWidget {
                 font-size: 11px;
-                gridline-color: #cbd5e1;
-                background-color: #ffffff;
-                color: #0f172a;
-                border: 1px solid #cbd5e1;
-            }
-            QTableWidget::item {
-                background-color: #ffffff;
-                color: #0f172a;
-                padding: 4px;
             }
             QHeaderView::section {
-                background-color: #e2e8f0;
-                color: #0f172a;
                 font-weight: bold;
                 padding: 4px;
-                border: 1px solid #cbd5e1;
             }
         """)
         return table
@@ -406,10 +372,6 @@ class ParameterDisplayWidget(QWidget):
                 item = QTableWidgetItem(str(item_text))
                 item.setTextAlignment(Qt.AlignCenter)
                 table.setItem(row, col, item)
-        row_height = 24
-        header_height = 28
-        total_height = header_height + (row_height * len(data)) + 6
-        table.setFixedHeight(total_height)
         row_height = 24
         header_height = 28
         total_height = header_height + (row_height * len(data)) + 6
