@@ -1,6 +1,6 @@
 {
   "title": "Virtual Radiosonde Plotter: Atmospheric Sounding Analysis & Skew-T Visualization Tool",
-  "description": "A professional desktop application for downloading atmospheric weather model profiles (Open-Meteo ERA5 / Forecast), performing MetPy thermodynamic calculations (CAPE, CIN, PWAT, LCL, LFC, EL), generating publication-quality Skew-T Log-P diagrams, and exporting data to CSV and native RAOB (.rsf, .env) software formats.",
+  "description": "<p><b>Virtual Radiosonde Plotter</b> is a professional desktop application for atmospheric sounding data analysis, thermodynamic profiling, and high-resolution Skew-T Log-P diagram visualization.</p><h3>Key Features:</h3><ul><li><b>Asynchronous Data Ingestion:</b> Automated Open-Meteo ERA5 / Weather Model 19-level profile fetching with global geocoding support.</li><li><b>Thermodynamic Profiling & Cloud Base Height:</b> Calculates Surface Conditions, LCL Pressure/Temperature, Cloud Base Height (<i>z<sub>LCL</sub></i> in meters and feet), LFC, EL, SBCAPE, MLCAPE, MUCAPE, SBCIN, MLCIN, MUCIN, PWAT, K-Index, Total Totals, Lifted Index, Showalter Index, SWEAT Index, and Storm Relative Helicity (SRH).</li><li><b>Tropical Severe Weather Risk Assessment:</b> Automated threat assessment for Thunderstorm potential, Heavy Rain / Moisture supply, and Low-level Wind Shear based on tropical thresholds.</li><li><b>Publication-Quality Visualization:</b> Standard Skew-T Log-P diagrams with dry/moist adiabats, mixing ratio lines, parcel path trajectories, CAPE/CIN shading, wind barbs, and dark/light mode toggles.</li><li><b>RAOB Software Compatibility:</b> Export profile data natively into RAOB Sounding Format (<code>.rsf</code>), RAOB Native format (<code>.env</code>), RAOB/NOAA ASCII text (<code>.txt</code>), and standard CSV formats.</li></ul><p>Developed by <b>Widhyatma (Jerukagung Meteorologi)</b>. Built using Python, PySide6 (Qt6), MetPy, and Matplotlib.</p>",
   "creators": [
     {
       "name": "Widhyatma",
@@ -9,6 +9,7 @@
   ],
   "access_right": "open",
   "license": "MIT",
+  "version": "1.0.0",
   "upload_type": "software",
   "keywords": [
     "meteorology",
@@ -17,6 +18,7 @@
     "metpy",
     "severe-weather",
     "open-meteo",
+    "cloud-base-height",
     "atmospheric-sounding",
     "raob"
   ]

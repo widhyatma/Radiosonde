@@ -16,8 +16,9 @@ keywords:
   - metpy
   - severe-weather
   - open-meteo
+  - cloud-base-height
   - atmospheric-sounding
 abstract: >-
-  A professional desktop application for downloading atmospheric weather model profiles (Open-Meteo ERA5 / Forecast),
-  performing MetPy thermodynamic calculations (CAPE, CIN, PWAT, LCL, LFC, EL), generating publication-quality Skew-T Log-P diagrams,
-  and exporting data to CSV and native RAOB (.rsf, .env) software formats.
+  Virtual Radiosonde Plotter is a professional desktop application for downloading atmospheric weather model profiles (Open-Meteo ERA5 / Forecast),
+  performing MetPy thermodynamic calculations (CAPE, CIN, PWAT, LCL Cloud Base Height, LFC, EL), generating publication-quality Skew-T Log-P diagrams,
+  assessing tropical severe weather risks, and exporting data to CSV and native RAOB (.rsf, .env) software formats.
