@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
     QLabel, QLineEdit, QDoubleSpinBox, QDateEdit, QComboBox,
     QPushButton, QFrame, QScrollArea, QTableWidget, QTableWidgetItem,
-    QHeaderView, QSizePolicy
+    QHeaderView, QSizePolicy, QCalendarWidget
 )
+from PySide6.QtGui import QTextCharFormat, QColor, QFont
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -54,7 +55,7 @@ class ControlPanelWidget(QWidget):
 
         # Title
         lbl_title = QLabel("Configuration")
-        lbl_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #1e3a8a;")
+        lbl_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #000080;")
         layout.addWidget(lbl_title)
 
         # 1. City Search Box
@@ -107,6 +108,17 @@ class ControlPanelWidget(QWidget):
         self.date_picker.setDate(QDate.currentDate())
         self.date_picker.setDisplayFormat("yyyy-MM-dd")
 
+        # Configure calendar popup for classic retro Windows XP styling
+        cal = self.date_picker.calendarWidget()
+        if cal:
+            cal.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
+            cal.setGridVisible(True)
+            cal_fmt = QTextCharFormat()
+            cal_fmt.setBackground(QColor("#ece9d8"))
+            cal_fmt.setForeground(QColor("#000000"))
+            cal_fmt.setFont(QFont("Tahoma", 9, QFont.Bold))
+            cal.setHeaderTextFormat(cal_fmt)
+
         self.combo_utc_hour = QComboBox()
         self.combo_utc_hour.addItems(["00:00 UTC", "06:00 UTC", "12:00 UTC", "18:00 UTC"])
         self.combo_utc_hour.setCurrentIndex(2)  # Default 12:00 UTC
@@ -129,22 +141,23 @@ class ControlPanelWidget(QWidget):
         btn_layout.setSpacing(8)
 
         self.btn_download = QPushButton("Fetch & Plot Sounding")
-        self.btn_download.setMinimumHeight(36)
+        self.btn_download.setMinimumHeight(34)
         self.btn_download.setStyleSheet("""
             QPushButton {
-                background-color: #0055ea;
-                color: #ffffff;
+                background-color: #ece9d8;
+                color: #000000;
                 font-weight: bold;
-                font-size: 12px;
-                border: 2px outset #0055ea;
+                font-size: 11px;
+                border: 2px outset #d4d0c8;
                 border-radius: 0px;
+                padding: 4px 12px;
             }
             QPushButton:hover {
-                background-color: #1e70ff;
+                background-color: #f5f4ea;
             }
             QPushButton:pressed {
-                border: 2px inset #003c74;
-                background-color: #003c74;
+                border: 2px inset #d4d0c8;
+                background-color: #e2dfce;
             }
             QPushButton:disabled {
                 background-color: #d4d0c8;
@@ -232,7 +245,7 @@ class ParameterDisplayWidget(QWidget):
         main_layout.setContentsMargins(8, 8, 8, 8)
 
         lbl_title = QLabel("Sounding Parameters")
-        lbl_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #047857;")
+        lbl_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #000080;")
         main_layout.addWidget(lbl_title)
 
         scroll = QScrollArea()
@@ -254,7 +267,7 @@ class ParameterDisplayWidget(QWidget):
         self.lbl_wind_threat = QLabel("Wind Shear: N/A")
 
         for lbl in [self.lbl_ts_threat, self.lbl_rain_threat, self.lbl_wind_threat]:
-            lbl.setStyleSheet("font-weight: bold; font-size: 11px; padding: 4px; border-radius: 4px;")
+            lbl.setStyleSheet("font-weight: bold; font-size: 11px; padding: 4px; border: 1px solid #919b9c; border-radius: 0px;")
             gt_layout.addWidget(lbl)
 
         layout.addWidget(group_threat)
@@ -325,13 +338,13 @@ class ParameterDisplayWidget(QWidget):
         threats = indices.get_threat_assessment()
 
         self.lbl_ts_threat.setText(f"⚡ Thunderstorm: {threats['thunderstorm']['level']}")
-        self.lbl_ts_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['thunderstorm']['color']}; border-radius: 4px;")
+        self.lbl_ts_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 4px; color: #ffffff; background-color: {threats['thunderstorm']['color']}; border: 1px solid #000000; border-radius: 0px;")
 
         self.lbl_rain_threat.setText(f"🌧️ Heavy Rain: {threats['heavy_rain']['level']}")
-        self.lbl_rain_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['heavy_rain']['color']}; border-radius: 4px;")
+        self.lbl_rain_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 4px; color: #ffffff; background-color: {threats['heavy_rain']['color']}; border: 1px solid #000000; border-radius: 0px;")
 
         self.lbl_wind_threat.setText(f"🌪️ Wind Shear: {threats['wind_shear']['level']}")
-        self.lbl_wind_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 5px; color: #ffffff; background-color: {threats['wind_shear']['color']}; border-radius: 4px;")
+        self.lbl_wind_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 4px; color: #ffffff; background-color: {threats['wind_shear']['color']}; border: 1px solid #000000; border-radius: 0px;")
 
         # 2. Levels Table
         cbh_val = f"{self._fmt(indices.lcl_height_m, '.0f')} m ({self._fmt(indices.lcl_height_ft, '.0f')} ft)"
@@ -397,7 +410,7 @@ class PlotCanvasWidget(QWidget):
         
         self.lbl_placeholder = QLabel("Click 'Fetch & Plot Sounding' or 'Open Local CSV' to generate a Skew-T diagram.")
         self.lbl_placeholder.setAlignment(Qt.AlignCenter)
-        self.lbl_placeholder.setStyleSheet("font-size: 14px; font-weight: bold; color: #475569;")
+        self.lbl_placeholder.setStyleSheet("font-size: 12px; font-weight: bold; color: #555555;")
         self.layout.addWidget(self.lbl_placeholder)
 
     def set_figure(self, fig: plt.Figure):

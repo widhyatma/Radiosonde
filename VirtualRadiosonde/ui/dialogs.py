@@ -11,47 +11,48 @@ from PySide6.QtWidgets import (
 
 
 def apply_dialog_style(dialog: QWidget):
-    """Applies clean, high-contrast QSS styling to dialogs and message boxes."""
+    """Applies classic Windows XP square & beveled styling to dialogs and message boxes."""
     qss = """
     QDialog, QMessageBox {
-        background-color: #ffffff;
-        color: #0f172a;
-        font-family: 'Segoe UI', 'Roboto', sans-serif;
+        background-color: #ece9d8;
+        color: #000000;
+        font-family: 'Tahoma', 'Segoe UI', sans-serif;
     }
     QLabel {
-        color: #0f172a;
-        font-weight: 500;
-        font-size: 12px;
+        color: #000000;
+        font-size: 11px;
     }
     QComboBox, QSpinBox {
-        border: 1px solid #94a3b8;
-        border-radius: 4px;
-        padding: 6px;
+        border: 1px solid #7f9db9;
+        border-radius: 0px;
+        padding: 4px;
         background-color: #ffffff;
-        color: #0f172a;
-        font-weight: 600;
+        color: #000000;
     }
     QComboBox:focus, QSpinBox:focus {
-        border: 2px solid #2563eb;
+        border: 1px solid #003c74;
     }
     QPushButton {
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        padding: 6px 14px;
-        background-color: #f1f5f9;
-        color: #0f172a;
-        font-weight: bold;
+        border: 2px outset #d4d0c8;
+        border-radius: 0px;
+        padding: 4px 14px;
+        background-color: #ece9d8;
+        color: #000000;
+        font-weight: normal;
     }
     QPushButton:hover {
-        background-color: #e2e8f0;
-        border-color: #64748b;
+        background-color: #f5f4ea;
+    }
+    QPushButton:pressed {
+        border: 2px inset #d4d0c8;
+        background-color: #e2dfce;
     }
     """
     dialog.setStyleSheet(qss)
 
 
 def show_error_dialog(parent: QWidget, title: str, message: str) -> None:
-    """Displays a high-contrast Qt error message box."""
+    """Displays a classic high-contrast Qt error message box."""
     msg_box = QMessageBox(parent)
     apply_dialog_style(msg_box)
     msg_box.setIcon(QMessageBox.Critical)
@@ -61,7 +62,7 @@ def show_error_dialog(parent: QWidget, title: str, message: str) -> None:
 
 
 def show_info_dialog(parent: QWidget, title: str, message: str) -> None:
-    """Displays a high-contrast Qt information message box."""
+    """Displays a classic high-contrast Qt information message box."""
     msg_box = QMessageBox(parent)
     apply_dialog_style(msg_box)
     msg_box.setIcon(QMessageBox.Information)
@@ -87,16 +88,16 @@ class AboutDialog(QDialog):
         layout.setSpacing(12)
 
         lbl_app_name = QLabel("🌦️ Virtual Radiosonde Plotter")
-        lbl_app_name.setStyleSheet("font-size: 17px; font-weight: bold; color: #1e3a8a;")
+        lbl_app_name.setStyleSheet("font-size: 16px; font-weight: bold; color: #000080;")
         lbl_app_name.setAlignment(Qt.AlignCenter)
 
         lbl_org = QLabel("Jerukagung Meteorologi")
         lbl_org.setAlignment(Qt.AlignCenter)
-        lbl_org.setStyleSheet("color: #047857; font-size: 13px; font-weight: bold;")
+        lbl_org.setStyleSheet("color: #000000; font-size: 12px; font-weight: bold;")
 
         lbl_version = QLabel("Version 1.0.0 (PySide6 / MetPy)")
         lbl_version.setAlignment(Qt.AlignCenter)
-        lbl_version.setStyleSheet("color: #475569; font-size: 11px; font-weight: 500;")
+        lbl_version.setStyleSheet("color: #555555; font-size: 11px;")
 
         lbl_desc = QLabel(
             "Aplikasi analisis termodinamika atmosfer dan visualisasi diagram Skew-T Log-P "
@@ -108,20 +109,26 @@ class AboutDialog(QDialog):
             "• GUI Framework: PySide6 (Qt6)"
         )
         lbl_desc.setWordWrap(True)
-        lbl_desc.setStyleSheet("margin-top: 8px; color: #0f172a; font-size: 11px; line-height: 1.4;")
+        lbl_desc.setStyleSheet("margin-top: 8px; color: #000000; font-size: 11px; line-height: 1.4;")
 
         btn_close = QPushButton("Tutup")
         btn_close.setMinimumWidth(100)
-        btn_close.setMinimumHeight(34)
+        btn_close.setMinimumHeight(28)
         btn_close.setStyleSheet("""
             QPushButton {
-                background-color: #1d4ed8;
-                color: #ffffff;
-                font-weight: bold;
-                border-radius: 4px;
+                border: 2px outset #d4d0c8;
+                border-radius: 0px;
+                padding: 4px 14px;
+                background-color: #ece9d8;
+                color: #000000;
+                font-weight: normal;
             }
             QPushButton:hover {
-                background-color: #1e40af;
+                background-color: #f5f4ea;
+            }
+            QPushButton:pressed {
+                border: 2px inset #d4d0c8;
+                background-color: #e2dfce;
             }
         """)
         btn_close.clicked.connect(self.accept)
@@ -155,7 +162,7 @@ class ExportDialog(QDialog):
         layout.setSpacing(14)
 
         lbl_title = QLabel("💾 Export Settings")
-        lbl_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #1e3a8a;")
+        lbl_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #000080;")
         layout.addWidget(lbl_title)
 
         form = QFormLayout()
@@ -170,9 +177,9 @@ class ExportDialog(QDialog):
         self.spin_dpi.setSingleStep(50)
 
         lbl_fmt = QLabel("Format Gambar:")
-        lbl_fmt.setStyleSheet("color: #0f172a; font-weight: bold;")
+        lbl_fmt.setStyleSheet("color: #000000; font-weight: bold;")
         lbl_dpi = QLabel("Resolusi (DPI):")
-        lbl_dpi.setStyleSheet("color: #0f172a; font-weight: bold;")
+        lbl_dpi.setStyleSheet("color: #000000; font-weight: bold;")
 
         form.addRow(lbl_fmt, self.combo_format)
         form.addRow(lbl_dpi, self.spin_dpi)
@@ -181,11 +188,11 @@ class ExportDialog(QDialog):
 
         btn_box = QHBoxLayout()
         btn_cancel = QPushButton("Batal")
-        btn_cancel.setStyleSheet("background-color: #f1f5f9; color: #0f172a; font-weight: bold; border: 1px solid #94a3b8;")
+        btn_cancel.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; background-color: #ece9d8; color: #000000; font-weight: normal; padding: 4px 14px;")
 
         btn_save = QPushButton("Simpan...")
         btn_save.setDefault(True)
-        btn_save.setStyleSheet("background-color: #1d4ed8; color: #ffffff; font-weight: bold;")
+        btn_save.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; background-color: #ece9d8; color: #000000; font-weight: bold; padding: 4px 14px;")
 
         btn_cancel.clicked.connect(self.reject)
         btn_save.clicked.connect(self.accept)
