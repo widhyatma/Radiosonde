@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+authors:
+  - family-names: "Widhyatma"
+    given-names: "Widhyatma"
+    affiliation: "Jerukagung Meteorologi"
+title: "Virtual Radiosonde Plotter: Atmospheric Sounding Analysis & Skew-T Visualization Tool"
+version: 1.0.0
+date-released: 2026-09-12
+license: MIT
+repository-code: "https://github.com/widhyatma/Radiosonde"
+keywords:
+  - meteorology
+  - radiosonde
+  - skew-t
+  - metpy
+  - severe-weather
+  - open-meteo
+  - atmospheric-sounding
+abstract: >-
+  A professional desktop application for downloading atmospheric weather model profiles (Open-Meteo ERA5 / Forecast),
+  performing MetPy thermodynamic calculations (CAPE, CIN, PWAT, LCL, LFC, EL), generating publication-quality Skew-T Log-P diagrams,
+  and exporting data to CSV and native RAOB (.rsf, .env) software formats.

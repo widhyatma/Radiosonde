@@ -1,0 +1,23 @@
+{
+  "title": "Virtual Radiosonde Plotter: Atmospheric Sounding Analysis & Skew-T Visualization Tool",
+  "description": "A professional desktop application for downloading atmospheric weather model profiles (Open-Meteo ERA5 / Forecast), performing MetPy thermodynamic calculations (CAPE, CIN, PWAT, LCL, LFC, EL), generating publication-quality Skew-T Log-P diagrams, and exporting data to CSV and native RAOB (.rsf, .env) software formats.",
+  "creators": [
+    {
+      "name": "Widhyatma",
+      "affiliation": "Jerukagung Meteorologi"
+    }
+  ],
+  "access_right": "open",
+  "license": "MIT",
+  "upload_type": "software",
+  "keywords": [
+    "meteorology",
+    "radiosonde",
+    "skew-t",
+    "metpy",
+    "severe-weather",
+    "open-meteo",
+    "atmospheric-sounding",
+    "raob"
+  ]
+}

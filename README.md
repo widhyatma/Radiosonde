@@ -98,3 +98,35 @@ pyinstaller --noconfirm VirtualRadiosondePlotter.spec
 - **Meteorological Calculations**: [MetPy](https://unidata.github.io/MetPy/)
 - **Visualization**: [Matplotlib](https://matplotlib.org/) & MetPy `SkewT`
 - **Data Source**: [Open-Meteo Weather API](https://open-meteo.com/)
+
+---
+
+## 📜 Citation / Cara Mengutip (Zenodo DOI)
+
+Jika Anda menggunakan software **Virtual Radiosonde Plotter** dalam riset, publikasi ilmiah, atau operasional meteorologi, silakan kutip menggunakan format berikut:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12345678.svg)](https://doi.org/10.5281/zenodo.12345678)
+
+### APA / IEEE Format
+> Widhyatma. (2026). *Virtual Radiosonde Plotter: Atmospheric Sounding Analysis & Skew-T Visualization Tool* (Version v1.0.0). Jerukagung Meteorologi. Zenodo. https://doi.org/10.5281/zenodo.12345678
+
+### BibTeX Format
+```bibtex
+@software{widhyatma_2026_virtual_radiosonde,
+  author       = {Widhyatma},
+  title        = {Virtual Radiosonde Plotter: Atmospheric Sounding Analysis \& Skew-T Visualization Tool},
+  month        = sep,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v1.0.0},
+  doi          = {10.5281/zenodo.12345678},
+  url          = {https://github.com/widhyatma/Radiosonde}
+}
+```
+
+---
+
+## ⚖️ License
+
+Lisensi software ini berada di bawah [MIT License](LICENSE). Hak Cipta (c) 2026 Widhyatma (Jerukagung Meteorologi).
+
