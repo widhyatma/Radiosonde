@@ -60,7 +60,7 @@ class AboutDialog(tk.Toplevel):
 
         lbl_app = tk.Label(
             container,
-            text="🌦️ Virtual Radiosonde Plotter",
+            text="Virtual Radiosonde Plotter",
             font=("Tahoma", 13, "bold"),
             bg="#ece9d8",
             fg="#000080"
@@ -88,11 +88,11 @@ class AboutDialog(tk.Toplevel):
         desc_text = (
             "Aplikasi analisis termodinamika atmosfer dan visualisasi diagram Skew-T Log-P "
             "standar riset meteorologi.\n\n"
-            "• Organisasi: Jerukagung Meteorologi\n"
-            "• Core Engine: MetPy & Pint\n"
-            "• Visualisasi: Matplotlib Skew-T Log-P (TkAgg)\n"
-            "• Sumber Data: ERA5 / Weather Model\n"
-            "• GUI Framework: Python Tkinter"
+            "Organisasi: Jerukagung Meteorologi\n"
+            "Core Engine: MetPy & Pint\n"
+            "Visualisasi: Matplotlib Skew-T Log-P (TkAgg)\n"
+            "Sumber Data: ERA5 / Weather Model\n"
+            "GUI Framework: Python Tkinter"
         )
         lbl_desc = tk.Label(
             container,

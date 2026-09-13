@@ -567,7 +567,7 @@ class ParameterDisplayWidget(tk.Frame):
 
         self.lbl_ts_threat = tk.Label(
             group_threat,
-            text="⚡ Thunderstorm: N/A",
+            text="Thunderstorm: N/A",
             font=("Tahoma", 8, "bold"),
             bg="#10b981",
             fg="#ffffff",
@@ -579,7 +579,7 @@ class ParameterDisplayWidget(tk.Frame):
 
         self.lbl_rain_threat = tk.Label(
             group_threat,
-            text="🌧️ Heavy Rain: N/A",
+            text="Heavy Rain: N/A",
             font=("Tahoma", 8, "bold"),
             bg="#10b981",
             fg="#ffffff",
@@ -591,7 +591,7 @@ class ParameterDisplayWidget(tk.Frame):
 
         self.lbl_wind_threat = tk.Label(
             group_threat,
-            text="🌪️ Wind Shear: N/A",
+            text="Wind Shear: N/A",
             font=("Tahoma", 8, "bold"),
             bg="#10b981",
             fg="#ffffff",
@@ -631,7 +631,7 @@ class ParameterDisplayWidget(tk.Frame):
         # Copy Summary Button
         self.btn_copy_summary = tk.Button(
             self.scroll_content,
-            text="📋 Copy Summary Text",
+            text="Copy Summary Text",
             font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
@@ -692,15 +692,15 @@ class ParameterDisplayWidget(tk.Frame):
         threats = indices.get_threat_assessment()
 
         self.lbl_ts_threat.config(
-            text=f"⚡ Thunderstorm: {threats['thunderstorm']['level']}",
+            text=f"Thunderstorm: {threats['thunderstorm']['level']}",
             bg=threats['thunderstorm']['color']
         )
         self.lbl_rain_threat.config(
-            text=f"🌧️ Heavy Rain: {threats['heavy_rain']['level']}",
+            text=f"Heavy Rain: {threats['heavy_rain']['level']}",
             bg=threats['heavy_rain']['color']
         )
         self.lbl_wind_threat.config(
-            text=f"🌪️ Wind Shear: {threats['wind_shear']['level']}",
+            text=f"Wind Shear: {threats['wind_shear']['level']}",
             bg=threats['wind_shear']['color']
         )
 

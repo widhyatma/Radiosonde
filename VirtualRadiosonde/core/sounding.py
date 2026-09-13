@@ -58,44 +58,44 @@ class SoundingIndices:
         ki = self.k_index if (self.k_index is not None and not np.isnan(self.k_index)) else 0.0
 
         if cape > 2500 or ki > 38:
-            ts_risk = "Sangat Tinggi (Extreme)"
+            ts_risk = "Extreme"
             ts_color = "#dc2626"
         elif cape > 1000 or ki > 30:
-            ts_risk = "Tinggi (High)"
+            ts_risk = "High"
             ts_color = "#ea580c"
         elif cape > 300 or ki > 22:
-            ts_risk = "Sedang (Moderate)"
+            ts_risk = "Moderate"
             ts_color = "#d97706"
         else:
-            ts_risk = "Rendah (Low)"
+            ts_risk = "Low"
             ts_color = "#16a34a"
 
         pwat = self.pwat_mm if (self.pwat_mm is not None and not np.isnan(self.pwat_mm)) else 0.0
         if pwat >= 55.0:
-            rain_risk = "Sangat Tinggi (Extreme)"
+            rain_risk = "Extreme"
             rain_color = "#dc2626"
         elif pwat >= 40.0:
-            rain_risk = "Tinggi (High)"
+            rain_risk = "High"
             rain_color = "#ea580c"
         elif pwat >= 20.0:
-            rain_risk = "Sedang (Moderate)"
+            rain_risk = "Moderate"
             rain_color = "#d97706"
         else:
-            rain_risk = "Rendah (Low)"
+            rain_risk = "Low"
             rain_color = "#16a34a"
 
         srh = self.srh_0_3km if (self.srh_0_3km is not None and not np.isnan(self.srh_0_3km)) else 0.0
         if srh > 250:
-            wind_risk = "Sangat Tinggi (Extreme)"
+            wind_risk = "Extreme"
             wind_color = "#dc2626"
         elif srh > 150:
-            wind_risk = "Tinggi (High)"
+            wind_risk = "High"
             wind_color = "#ea580c"
         elif srh > 75:
-            wind_risk = "Sedang (Moderate)"
+            wind_risk = "Moderate"
             wind_color = "#d97706"
         else:
-            wind_risk = "Rendah (Low)"
+            wind_risk = "Low"
             wind_color = "#16a34a"
 
         return {
