@@ -1,6 +1,6 @@
 """
 UI package for Virtual Radiosonde Plotter.
-Contains PySide6 Qt main window, custom widgets, and dialogs.
+Contains Tkinter main window, custom widgets, and dialogs.
 """
 
 from .widgets import ControlPanelWidget, ParameterDisplayWidget, PlotCanvasWidget

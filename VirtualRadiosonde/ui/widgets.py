@@ -1,352 +1,707 @@
 """
-Custom PySide6 Widgets for Virtual Radiosonde Plotter.
-Defines Control Panel, Parameter Display Panel, and Matplotlib Canvas Widget.
+Custom Tkinter Widgets for Virtual Radiosonde Plotter.
+Defines Control Panel, Parameter Display Panel, Matplotlib Canvas Widget,
+and a Zero-Dependency Classic Retro Windows XP Calendar Popup.
 """
 
-from typing import Dict, Any, Optional, List
-import numpy as np
-from PySide6.QtCore import Qt, Signal, QDate
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
-    QLabel, QLineEdit, QDoubleSpinBox, QDateEdit, QComboBox,
-    QPushButton, QFrame, QScrollArea, QTableWidget, QTableWidgetItem,
-    QHeaderView, QSizePolicy, QCalendarWidget
-)
-from PySide6.QtGui import QTextCharFormat, QColor, QFont
+import calendar
+import datetime
+from typing import Dict, Any, Optional, List, Tuple, Callable
+import tkinter as tk
+from tkinter import ttk
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 from core.sounding import SoundingIndices
 
 
-class ControlPanelWidget(QWidget):
+class CalendarPopupWidget(tk.Toplevel):
+    """
+    Zero-dependency classic retro Windows XP Calendar Popup for date picking.
+    Uses Python's standard library 'calendar' and renders 3D beveled square day cells.
+    """
+    WEEKDAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
+
+    def __init__(self, parent: tk.Widget, initial_date_str: str, on_date_selected: Callable[[str], None]):
+        super().__init__(parent)
+        self.title("Select Date")
+        self.resizable(False, False)
+        self.configure(bg="#ece9d8")
+
+        self.on_date_selected = on_date_selected
+
+        # Parse initial date (yyyy-MM-dd)
+        try:
+            parts = [int(p) for p in initial_date_str.split("-")]
+            self.current_year = parts[0]
+            self.current_month = parts[1]
+            self.selected_day = parts[2]
+        except Exception:
+            today = datetime.date.today()
+            self.current_year = today.year
+            self.current_month = today.month
+            self.selected_day = today.day
+
+        # Make popup transient
+        self.transient(parent)
+        self.grab_set()
+
+        self.init_ui()
+        self.position_near_widget(parent)
+
+    def position_near_widget(self, parent: tk.Widget):
+        self.update_idletasks()
+        try:
+            x = parent.winfo_rootx()
+            y = parent.winfo_rooty() + parent.winfo_height() + 2
+            self.geometry(f"+{x}+{y}")
+        except Exception:
+            pass
+
+    def init_ui(self):
+        container = tk.Frame(self, bg="#ece9d8", bd=2, relief=tk.RAISED, padx=4, pady=4)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        # 1. Navigation Header (< Month Year >)
+        nav_frame = tk.Frame(container, bg="#ece9d8", bd=1, relief=tk.GROOVE)
+        nav_frame.pack(fill=tk.X, pady=(0, 4))
+
+        btn_prev = tk.Button(
+            nav_frame,
+            text="<",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            width=2,
+            command=self.prev_month
+        )
+        btn_prev.pack(side=tk.LEFT, padx=2, pady=2)
+
+        self.lbl_month_year = tk.Label(
+            nav_frame,
+            text=f"{calendar.month_name[self.current_month]} {self.current_year}",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000"
+        )
+        self.lbl_month_year.pack(side=tk.LEFT, expand=True)
+
+        btn_next = tk.Button(
+            nav_frame,
+            text=">",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            width=2,
+            command=self.next_month
+        )
+        btn_next.pack(side=tk.RIGHT, padx=2, pady=2)
+
+        # 2. Weekdays Header
+        days_frame = tk.Frame(container, bg="#ece9d8")
+        days_frame.pack(fill=tk.X)
+
+        for col, wday in enumerate(self.WEEKDAY_NAMES):
+            fg_col = "#cc0000" if col == 0 else ("#0000ff" if col == 6 else "#000000")
+            lbl = tk.Label(
+                days_frame,
+                text=wday,
+                font=("Tahoma", 8, "bold"),
+                bg="#ece9d8",
+                fg=fg_col,
+                width=4,
+                pady=2,
+                relief=tk.GROOVE,
+                bd=1
+            )
+            lbl.grid(row=0, column=col, padx=1, pady=1)
+
+        # 3. Days Grid
+        self.grid_frame = tk.Frame(container, bg="#ffffff", bd=1, relief=tk.SUNKEN)
+        self.grid_frame.pack(fill=tk.BOTH, expand=True, pady=(2, 0))
+
+        self.render_calendar_days()
+
+    def render_calendar_days(self):
+        # Clear existing buttons
+        for widget in self.grid_frame.winfo_children():
+            widget.destroy()
+
+        self.lbl_month_year.config(text=f"{calendar.month_name[self.current_month]} {self.current_year}")
+
+        cal = calendar.Calendar(firstweekday=6)
+        month_days = cal.monthdayscalendar(self.current_year, self.current_month)
+
+        for r, week in enumerate(month_days):
+            for c, day in enumerate(week):
+                if day == 0:
+                    lbl_empty = tk.Label(self.grid_frame, text="", bg="#ffffff", width=4, height=1)
+                    lbl_empty.grid(row=r, column=c, padx=1, pady=1)
+                else:
+                    is_selected = (day == self.selected_day)
+                    bg_col = "#316ac5" if is_selected else "#ffffff"
+                    fg_col = "#ffffff" if is_selected else ("#cc0000" if c == 0 else ("#0000ff" if c == 6 else "#000000"))
+
+                    btn = tk.Button(
+                        self.grid_frame,
+                        text=str(day),
+                        font=("Tahoma", 8, "bold" if is_selected else "normal"),
+                        bg=bg_col,
+                        fg=fg_col,
+                        activebackground="#316ac5",
+                        activeforeground="#ffffff",
+                        relief=tk.FLAT if is_selected else tk.GROOVE,
+                        bd=1,
+                        width=3,
+                        cursor="hand2",
+                        command=lambda d=day: self.on_day_clicked(d)
+                    )
+                    btn.grid(row=r, column=c, padx=1, pady=1)
+
+    def prev_month(self):
+        if self.current_month == 1:
+            self.current_month = 12
+            self.current_year -= 1
+        else:
+            self.current_month -= 1
+        self.render_calendar_days()
+
+    def next_month(self):
+        if self.current_month == 12:
+            self.current_month = 1
+            self.current_year += 1
+        else:
+            self.current_month += 1
+        self.render_calendar_days()
+
+    def on_day_clicked(self, day: int):
+        date_str = f"{self.current_year:04d}-{self.current_month:02d}-{day:02d}"
+        self.on_date_selected(date_str)
+        self.destroy()
+
+
+class ControlPanelWidget(tk.Frame):
     """
     Left panel widget providing inputs for coordinates, date/time, city search, presets, and action buttons.
+    Styled with classic Windows XP neutral palette (#ece9d8, Tahoma).
     """
-    fetch_requested = Signal(dict)
-    save_figure_requested = Signal()
-    export_csv_requested = Signal()
-    open_csv_requested = Signal()
-    search_city_requested = Signal(str)
-
     PRESET_CITIES = [
-        ("Custom Coordinates", None, None),
-        ("Kebumen", -7.6686, 109.6536),
-        ("Jakarta", -6.2088, 106.8456),
-        ("Bandung", -6.9175, 107.6191),
-        ("Surabaya", -7.2575, 112.7521),
-        ("Yogyakarta", -7.7956, 110.3695),
-        ("Medan", 3.5952, 98.6722),
-        ("Makassar", -5.1477, 119.4327),
-        ("Denpasar", -8.6705, 115.2126),
-        ("Jayapura", -2.5489, 140.7196),
+        ("-- Select Preset Location --", None, None),
+        ("Kebumen, Central Java", -7.6686, 109.6536),
+        ("Jakarta (Soekarno-Hatta / CGK)", -6.1256, 106.6559),
+        ("Surabaya (Juanda / SUB)", -7.3798, 112.7875),
+        ("Bandung (Husein / BDO)", -6.9006, 107.5761),
+        ("Yogyakarta (YIA)", -7.9073, 110.0544),
+        ("Denpasar, Bali (DPS)", -8.7482, 115.1672),
+        ("Medan (Kualanamu / KNO)", 3.6422, 98.8853),
+        ("Makassar (Sultan Hasanuddin / UPG)", -5.0617, 119.5540),
+        ("Singapore (Changi / WSSS)", 1.3644, 103.9915),
+        ("Darwin, Australia (YPDN)", -12.4147, 130.8767),
     ]
 
-    def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
+    def __init__(
+        self,
+        parent: tk.Widget,
+        on_fetch: Callable[[Dict[str, Any]], None],
+        on_open_csv: Callable[[], None],
+        on_save_figure: Callable[[], None],
+        on_export_csv: Callable[[], None],
+        on_search_city: Callable[[str], None]
+    ):
+        super().__init__(parent, bg="#ece9d8", padx=8, pady=8)
+        self.on_fetch = on_fetch
+        self.on_open_csv = on_open_csv
+        self.on_save_figure = on_save_figure
+        self.on_export_csv = on_export_csv
+        self.on_search_city = on_search_city
+
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(12)
+        # 1. Section Title
+        lbl_title = tk.Label(
+            self,
+            text="Configuration",
+            font=("Tahoma", 11, "bold"),
+            bg="#ece9d8",
+            fg="#000080"
+        )
+        lbl_title.pack(anchor="w", pady=(0, 6))
 
-        # Title
-        lbl_title = QLabel("Configuration")
-        lbl_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #000080;")
-        layout.addWidget(lbl_title)
+        # 2. City Search Box Group
+        group_search = tk.LabelFrame(
+            self,
+            text="City Search & Presets",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            padx=6,
+            pady=6
+        )
+        group_search.pack(fill=tk.X, pady=(0, 8))
 
-        # 1. City Search Box
-        group_search = QGroupBox("City Search & Presets")
-        search_layout = QVBoxLayout(group_search)
-        search_layout.setSpacing(8)
+        search_bar = tk.Frame(group_search, bg="#ece9d8")
+        search_bar.pack(fill=tk.X, pady=(0, 4))
 
-        search_input_layout = QHBoxLayout()
-        self.txt_city_search = QLineEdit()
-        self.txt_city_search.setPlaceholderText("Search city (e.g. Bandung, Jakarta)")
-        self.btn_search_city = QPushButton("Search")
-        self.btn_search_city.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
-        
-        search_input_layout.addWidget(self.txt_city_search)
-        search_input_layout.addWidget(self.btn_search_city)
+        self.txt_city_search = ttk.Entry(search_bar, font=("Tahoma", 9))
+        self.txt_city_search.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
+        self.txt_city_search.insert(0, "Kebumen")
+        self.txt_city_search.bind("<Return>", lambda e: self.do_search())
 
-        # Presets dropdown
-        self.combo_presets = QComboBox()
-        for name, lat, lon in self.PRESET_CITIES:
-            label = f"{name} ({lat:.2f}°, {lon:.2f}°)" if lat is not None else name
-            self.combo_presets.addItem(label)
-        self.combo_presets.setCurrentIndex(1)  # Default Kebumen
+        self.btn_search_city = tk.Button(
+            search_bar,
+            text="Search",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            padx=6,
+            command=self.do_search
+        )
+        self.btn_search_city.pack(side=tk.RIGHT)
 
-        search_layout.addLayout(search_input_layout)
-        search_layout.addWidget(QLabel("Preset Location:"))
-        search_layout.addWidget(self.combo_presets)
+        tk.Label(group_search, text="Preset Location:", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").pack(anchor="w")
 
-        layout.addWidget(group_search)
+        preset_names = [p[0] for p in self.PRESET_CITIES]
+        self.combo_presets = ttk.Combobox(
+            group_search,
+            values=preset_names,
+            state="readonly",
+            font=("Tahoma", 9)
+        )
+        self.combo_presets.current(1)  # Default Kebumen
+        self.combo_presets.pack(fill=tk.X, pady=(2, 0))
+        self.combo_presets.bind("<<ComboboxSelected>>", self.on_preset_selected)
 
-        # 2. Location & Time Group
-        group_input = QGroupBox("Target Sounding Settings")
-        form = QFormLayout(group_input)
-        form.setSpacing(10)
+        # 3. Location & Time Group
+        group_input = tk.LabelFrame(
+            self,
+            text="Target Sounding Settings",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            padx=6,
+            pady=6
+        )
+        group_input.pack(fill=tk.X, pady=(0, 8))
 
-        self.spin_lat = QDoubleSpinBox()
-        self.spin_lat.setRange(-90.0, 90.0)
-        self.spin_lat.setDecimals(4)
-        self.spin_lat.setValue(-7.6686)
+        form = tk.Frame(group_input, bg="#ece9d8")
+        form.pack(fill=tk.X)
 
-        self.spin_lon = QDoubleSpinBox()
-        self.spin_lon.setRange(-180.0, 180.0)
-        self.spin_lon.setDecimals(4)
-        self.spin_lon.setValue(109.6536)
+        # Latitude
+        tk.Label(form, text="Latitude (°):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=0, column=0, sticky="w", pady=3)
+        self.spin_lat = ttk.Spinbox(form, from_=-90.0, to=90.0, increment=0.1, font=("Tahoma", 9), width=16)
+        self.spin_lat.set(-7.6686)
+        self.spin_lat.grid(row=0, column=1, sticky="e", pady=3)
 
-        self.txt_loc_name = QLineEdit("Kebumen")
-        self.txt_loc_name.setPlaceholderText("e.g. Kebumen, Jakarta")
+        # Longitude
+        tk.Label(form, text="Longitude (°):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=1, column=0, sticky="w", pady=3)
+        self.spin_lon = ttk.Spinbox(form, from_=-180.0, to=180.0, increment=0.1, font=("Tahoma", 9), width=16)
+        self.spin_lon.set(109.6536)
+        self.spin_lon.grid(row=1, column=1, sticky="e", pady=3)
 
-        self.date_picker = QDateEdit()
-        self.date_picker.setCalendarPopup(True)
-        self.date_picker.setDate(QDate.currentDate())
-        self.date_picker.setDisplayFormat("yyyy-MM-dd")
+        # Location Name
+        tk.Label(form, text="Location Name:", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=2, column=0, sticky="w", pady=3)
+        self.txt_loc_name = ttk.Entry(form, font=("Tahoma", 9), width=18)
+        self.txt_loc_name.insert(0, "Kebumen")
+        self.txt_loc_name.grid(row=2, column=1, sticky="e", pady=3)
 
-        # Configure calendar popup for classic retro Windows XP styling
-        cal = self.date_picker.calendarWidget()
-        if cal:
-            cal.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
-            cal.setGridVisible(True)
-            cal_fmt = QTextCharFormat()
-            cal_fmt.setBackground(QColor("#ece9d8"))
-            cal_fmt.setForeground(QColor("#000000"))
-            cal_fmt.setFont(QFont("Tahoma", 9, QFont.Bold))
-            cal.setHeaderTextFormat(cal_fmt)
+        # Date Picker with Popup button
+        tk.Label(form, text="Date (UTC):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=3, column=0, sticky="w", pady=3)
+        date_bar = tk.Frame(form, bg="#ece9d8")
+        date_bar.grid(row=3, column=1, sticky="e", pady=3)
 
-        self.combo_utc_hour = QComboBox()
-        self.combo_utc_hour.addItems(["00:00 UTC", "06:00 UTC", "12:00 UTC", "18:00 UTC"])
-        self.combo_utc_hour.setCurrentIndex(2)  # Default 12:00 UTC
+        today_str = datetime.date.today().strftime("%Y-%m-%d")
+        self.txt_date = ttk.Entry(date_bar, font=("Tahoma", 9), width=12)
+        self.txt_date.insert(0, today_str)
+        self.txt_date.pack(side=tk.LEFT, padx=(0, 2))
 
-        self.combo_source = QComboBox()
-        self.combo_source.addItems(["ERA5", "GFS", "Radiosonde Observation"])
+        self.btn_calendar = tk.Button(
+            date_bar,
+            text="📅",
+            font=("Tahoma", 8),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            padx=3,
+            command=self.open_calendar
+        )
+        self.btn_calendar.pack(side=tk.RIGHT)
 
-        form.addRow("Latitude (°):", self.spin_lat)
-        form.addRow("Longitude (°):", self.spin_lon)
-        form.addRow("Location Name:", self.txt_loc_name)
-        form.addRow("Date (UTC):", self.date_picker)
-        form.addRow("Time (UTC):", self.combo_utc_hour)
-        form.addRow("Data Source:", self.combo_source)
+        # Time UTC
+        tk.Label(form, text="Time (UTC):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=4, column=0, sticky="w", pady=3)
+        self.combo_utc_hour = ttk.Combobox(
+            form,
+            values=["00:00 UTC", "06:00 UTC", "12:00 UTC", "18:00 UTC"],
+            state="readonly",
+            font=("Tahoma", 9),
+            width=16
+        )
+        self.combo_utc_hour.current(2)  # Default 12:00 UTC
+        self.combo_utc_hour.grid(row=4, column=1, sticky="e", pady=3)
 
-        layout.addWidget(group_input)
+        # Data Source
+        tk.Label(form, text="Data Source:", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=5, column=0, sticky="w", pady=3)
+        self.combo_source = ttk.Combobox(
+            form,
+            values=["ERA5", "GFS", "Radiosonde Observation"],
+            state="readonly",
+            font=("Tahoma", 9),
+            width=16
+        )
+        self.combo_source.current(0)
+        self.combo_source.grid(row=5, column=1, sticky="e", pady=3)
 
-        # 3. Action Buttons
-        group_actions = QGroupBox("Actions")
-        btn_layout = QVBoxLayout(group_actions)
-        btn_layout.setSpacing(8)
+        # 4. Action Buttons Group
+        group_actions = tk.LabelFrame(
+            self,
+            text="Actions",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            padx=6,
+            pady=6
+        )
+        group_actions.pack(fill=tk.X, pady=(0, 4))
 
-        self.btn_download = QPushButton("Fetch & Plot Sounding")
-        self.btn_download.setMinimumHeight(34)
-        self.btn_download.setStyleSheet("""
-            QPushButton {
-                background-color: #ece9d8;
-                color: #000000;
-                font-weight: bold;
-                font-size: 11px;
-                border: 2px outset #d4d0c8;
-                border-radius: 0px;
-                padding: 4px 12px;
-            }
-            QPushButton:hover {
-                background-color: #f5f4ea;
-            }
-            QPushButton:pressed {
-                border: 2px inset #d4d0c8;
-                background-color: #e2dfce;
-            }
-            QPushButton:disabled {
-                background-color: #d4d0c8;
-                color: #888888;
-                border: 2px outset #d4d0c8;
-            }
-        """)
+        self.btn_download = tk.Button(
+            group_actions,
+            text="Fetch & Plot Sounding",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            activebackground="#f5f4ea",
+            relief=tk.RAISED,
+            bd=2,
+            pady=5,
+            command=self.on_fetch_clicked
+        )
+        self.btn_download.pack(fill=tk.X, pady=(0, 6))
 
-        self.btn_open_csv = QPushButton("Open Local CSV")
-        self.btn_open_csv.setMinimumHeight(30)
-        self.btn_open_csv.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
+        self.btn_open_csv = tk.Button(
+            group_actions,
+            text="Open Local CSV",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            pady=3,
+            command=self.on_open_csv
+        )
+        self.btn_open_csv.pack(fill=tk.X, pady=(0, 4))
 
-        self.btn_save_fig = QPushButton("Save Figure (PNG / PDF)")
-        self.btn_save_fig.setMinimumHeight(30)
-        self.btn_save_fig.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
+        self.btn_save_fig = tk.Button(
+            group_actions,
+            text="Save Figure (PNG / PDF)",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            pady=3,
+            command=self.on_save_figure
+        )
+        self.btn_save_fig.pack(fill=tk.X, pady=(0, 4))
 
-        self.btn_export_csv = QPushButton("Export CSV Data")
-        self.btn_export_csv.setMinimumHeight(30)
-        self.btn_export_csv.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: normal; background-color: #ece9d8; color: #000000;")
+        self.btn_export_csv = tk.Button(
+            group_actions,
+            text="Export CSV Data",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            pady=3,
+            command=self.on_export_csv
+        )
+        self.btn_export_csv.pack(fill=tk.X)
 
-        btn_layout.addWidget(self.btn_download)
-        btn_layout.addWidget(self.btn_open_csv)
-        btn_layout.addWidget(self.btn_save_fig)
-        btn_layout.addWidget(self.btn_export_csv)
-
-        layout.addWidget(group_actions)
-        layout.addStretch()
-
-        # Connect signals
-        self.btn_download.clicked.connect(self._on_download_clicked)
-        self.btn_save_fig.clicked.connect(self.save_figure_requested.emit)
-        self.btn_export_csv.clicked.connect(self.export_csv_requested.emit)
-        self.btn_open_csv.clicked.connect(self.open_csv_requested.emit)
-        
-        self.btn_search_city.clicked.connect(self._on_search_clicked)
-        self.txt_city_search.returnPressed.connect(self._on_search_clicked)
-        self.combo_presets.currentIndexChanged.connect(self._on_preset_changed)
-
-    def _on_search_clicked(self):
-        query = self.txt_city_search.text().strip()
+    def do_search(self):
+        query = self.txt_city_search.get().strip()
         if query:
-            self.search_city_requested.emit(query)
+            self.on_search_city(query)
 
-    def _on_preset_changed(self, idx: int):
-        if idx >= 0 and idx < len(self.PRESET_CITIES):
+    def open_calendar(self):
+        current_date = self.txt_date.get().strip()
+        CalendarPopupWidget(
+            parent=self.btn_calendar,
+            initial_date_str=current_date,
+            on_date_selected=lambda d: self.txt_date.delete(0, tk.END) or self.txt_date.insert(0, d)
+        )
+
+    def on_preset_selected(self, event=None):
+        idx = self.combo_presets.current()
+        if idx > 0:
             name, lat, lon = self.PRESET_CITIES[idx]
-            if lat is not None and lon is not None:
-                self.spin_lat.setValue(lat)
-                self.spin_lon.setValue(lon)
-                self.txt_loc_name.setText(name)
+            self.set_coordinates(lat, lon, name.split(",")[0].strip())
 
     def set_coordinates(self, lat: float, lon: float, name: str):
-        """Sets form fields when city search is completed."""
-        self.spin_lat.setValue(lat)
-        self.spin_lon.setValue(lon)
-        self.txt_loc_name.setText(name)
+        self.spin_lat.set(f"{lat:.4f}")
+        self.spin_lon.set(f"{lon:.4f}")
+        self.txt_loc_name.delete(0, tk.END)
+        self.txt_loc_name.insert(0, name)
 
-    def _on_download_clicked(self):
-        utc_text = self.combo_utc_hour.currentText()
-        utc_hour = int(utc_text.split(":")[0])
+    def on_fetch_clicked(self):
+        try:
+            lat = float(self.spin_lat.get())
+            lon = float(self.spin_lon.get())
+        except ValueError:
+            return
+
+        loc_name = self.txt_loc_name.get().strip() or "Custom Location"
+        date_str = self.txt_date.get().strip()
+        utc_text = self.combo_utc_hour.get()
+        target_utc_hour = int(utc_text.split(":")[0])
+        source = self.combo_source.get()
 
         config = {
-            "latitude": self.spin_lat.value(),
-            "longitude": self.spin_lon.value(),
-            "location_name": self.txt_loc_name.text().strip() or "Target Location",
-            "date_str": self.date_picker.date().toString("yyyy-MM-dd"),
-            "target_utc_hour": utc_hour,
-            "source": self.combo_source.currentText(),
+            "latitude": lat,
+            "longitude": lon,
+            "location_name": loc_name,
+            "date_str": date_str,
+            "target_utc_hour": target_utc_hour,
+            "source": source
         }
-        self.fetch_requested.emit(config)
+        self.on_fetch(config)
 
 
-class ParameterDisplayWidget(QWidget):
+class PlotCanvasWidget(tk.Frame):
     """
-    Right panel widget displaying calculated thermodynamic parameters, threat assessments, and copy action.
+    Matplotlib Tkinter Canvas widget embedding Skew-T diagrams with navigation toolbar.
     """
-    copy_summary_requested = Signal()
+    def __init__(self, parent: tk.Widget):
+        super().__init__(parent, bg="#ffffff", bd=1, relief=tk.SUNKEN)
+        self.canvas: Optional[FigureCanvasTkAgg] = None
+        self.toolbar: Optional[NavigationToolbar2Tk] = None
 
-    def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
+        self.lbl_placeholder = tk.Label(
+            self,
+            text="Click 'Fetch & Plot Sounding' or 'Open Local CSV' to generate a Skew-T diagram.",
+            font=("Tahoma", 11, "bold"),
+            bg="#ffffff",
+            fg="#555555"
+        )
+        self.lbl_placeholder.pack(expand=True)
+
+    def set_figure(self, fig: plt.Figure):
+        if self.lbl_placeholder:
+            self.lbl_placeholder.destroy()
+            self.lbl_placeholder = None
+
+        if self.toolbar:
+            self.toolbar.destroy()
+            self.toolbar = None
+
+        if self.canvas:
+            self.canvas.get_tk_widget().destroy()
+            self.canvas = None
+
+        self.canvas = FigureCanvasTkAgg(fig, master=self)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self)
+        self.toolbar.update()
+        self.toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+
+class ParameterDisplayWidget(tk.Frame):
+    """
+    Right panel widget displaying meteorological sounding indices, key levels, and severe risk badges.
+    """
+    def __init__(self, parent: tk.Widget, on_copy_summary: Callable[[], None]):
+        super().__init__(parent, bg="#ece9d8", padx=6, pady=6)
+        self.on_copy_summary = on_copy_summary
+
         self.init_ui()
 
     def init_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(8, 8, 8, 8)
+        lbl_title = tk.Label(
+            self,
+            text="Sounding Parameters",
+            font=("Tahoma", 11, "bold"),
+            bg="#ece9d8",
+            fg="#000080"
+        )
+        lbl_title.pack(anchor="w", pady=(0, 6))
 
-        lbl_title = QLabel("Sounding Parameters")
-        lbl_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #000080;")
-        main_layout.addWidget(lbl_title)
+        # Canvas with Scrollbar for vertical scrolling
+        container = tk.Frame(self, bg="#ece9d8")
+        container.pack(fill=tk.BOTH, expand=True)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
+        canvas = tk.Canvas(container, bg="#ece9d8", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        self.scroll_content = tk.Frame(canvas, bg="#ece9d8")
 
-        container = QWidget()
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        self.scroll_content.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        canvas.create_window((0, 0), window=self.scroll_content, anchor="nw")
+        canvas.configure(xscrollcommand=scrollbar.set, yscrollcommand=scrollbar.set)
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # 1. Severe Weather Risk Assessment Box
-        group_threat = QGroupBox("Severe Weather Threat Risk")
-        gt_layout = QVBoxLayout(group_threat)
-        gt_layout.setSpacing(6)
+        group_threat = tk.LabelFrame(
+            self.scroll_content,
+            text="Severe Weather Threat Risk",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            padx=6,
+            pady=6
+        )
+        group_threat.pack(fill=tk.X, pady=(0, 8))
 
-        self.lbl_ts_threat = QLabel("Thunderstorm: N/A")
-        self.lbl_rain_threat = QLabel("Heavy Rain: N/A")
-        self.lbl_wind_threat = QLabel("Wind Shear: N/A")
+        self.lbl_ts_threat = tk.Label(
+            group_threat,
+            text="⚡ Thunderstorm: N/A",
+            font=("Tahoma", 9, "bold"),
+            bg="#10b981",
+            fg="#ffffff",
+            relief=tk.SOLID,
+            bd=1,
+            pady=3
+        )
+        self.lbl_ts_threat.pack(fill=tk.X, pady=2)
 
-        for lbl in [self.lbl_ts_threat, self.lbl_rain_threat, self.lbl_wind_threat]:
-            lbl.setStyleSheet("font-weight: bold; font-size: 11px; padding: 4px; border: 1px solid #919b9c; border-radius: 0px;")
-            gt_layout.addWidget(lbl)
+        self.lbl_rain_threat = tk.Label(
+            group_threat,
+            text="🌧️ Heavy Rain: N/A",
+            font=("Tahoma", 9, "bold"),
+            bg="#10b981",
+            fg="#ffffff",
+            relief=tk.SOLID,
+            bd=1,
+            pady=3
+        )
+        self.lbl_rain_threat.pack(fill=tk.X, pady=2)
 
-        layout.addWidget(group_threat)
+        self.lbl_wind_threat = tk.Label(
+            group_threat,
+            text="🌪️ Wind Shear: N/A",
+            font=("Tahoma", 9, "bold"),
+            bg="#10b981",
+            fg="#ffffff",
+            relief=tk.SOLID,
+            bd=1,
+            pady=3
+        )
+        self.lbl_wind_threat.pack(fill=tk.X, pady=2)
 
         # 2. Surface & Key Levels Table
-        self.table_levels = self._create_param_table(["Parameter", "Pressure", "Value"])
-        group_levels = QGroupBox("Surface & Lifted Levels")
-        gl_layout = QVBoxLayout(group_levels)
-        gl_layout.setContentsMargins(4, 8, 4, 4)
-        gl_layout.addWidget(self.table_levels)
-        layout.addWidget(group_levels)
+        self.tree_levels = self._create_param_tree(
+            self.scroll_content,
+            "Surface & Lifted Levels",
+            ["Parameter", "Pressure", "Value"],
+            [100, 70, 90],
+            6
+        )
 
         # 3. Convective Energy (CAPE / CIN) Table
-        self.table_cape = self._create_param_table(["Parcel Type", "CAPE (J/kg)", "CIN (J/kg)"])
-        group_cape = QGroupBox("Convective Energy")
-        gc_layout = QVBoxLayout(group_cape)
-        gc_layout.setContentsMargins(4, 8, 4, 4)
-        gc_layout.addWidget(self.table_cape)
-        layout.addWidget(group_cape)
+        self.tree_cape = self._create_param_tree(
+            self.scroll_content,
+            "Convective Energy",
+            ["Parcel Type", "CAPE (J/kg)", "CIN (J/kg)"],
+            [110, 75, 75],
+            3
+        )
 
-        # 4. Moisture & Stability Indices Table
-        self.table_indices = self._create_param_table(["Stability Index", "Value", "Unit"])
-        group_indices = QGroupBox("Stability & Severe Indices")
-        gi_layout = QVBoxLayout(group_indices)
-        gi_layout.setContentsMargins(4, 8, 4, 4)
-        gi_layout.addWidget(self.table_indices)
-        layout.addWidget(group_indices)
+        # 4. Stability & Severe Indices Table
+        self.tree_indices = self._create_param_tree(
+            self.scroll_content,
+            "Stability & Severe Indices",
+            ["Stability Index", "Value", "Unit"],
+            [110, 75, 75],
+            8
+        )
 
         # Copy Summary Button
-        self.btn_copy_summary = QPushButton("📋 Copy Summary Text")
-        self.btn_copy_summary.setMinimumHeight(32)
-        self.btn_copy_summary.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; font-weight: bold; background-color: #ece9d8; color: #000000;")
-        self.btn_copy_summary.clicked.connect(self.copy_summary_requested.emit)
-        layout.addWidget(self.btn_copy_summary)
+        self.btn_copy_summary = tk.Button(
+            self.scroll_content,
+            text="📋 Copy Summary Text",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            pady=4,
+            command=self.on_copy_summary
+        )
+        self.btn_copy_summary.pack(fill=tk.X, pady=(6, 4))
 
-        scroll.setWidget(container)
-        main_layout.addWidget(scroll)
-
-        # Set initial empty state
         self.clear_display()
 
-    def _create_param_table(self, headers: List[str]) -> QTableWidget:
-        table = QTableWidget(0, len(headers))
-        table.setHorizontalHeaderLabels(headers)
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        table.verticalHeader().setVisible(False)
-        table.setEditTriggers(QTableWidget.NoEditTriggers)
-        table.setSelectionMode(QTableWidget.NoSelection)
-        table.setShowGrid(True)
-        table.setStyleSheet("""
-            QTableWidget {
-                font-size: 11px;
-            }
-            QHeaderView::section {
-                font-weight: bold;
-                padding: 4px;
-            }
-        """)
-        return table
+    def _create_param_tree(
+        self,
+        parent: tk.Widget,
+        title: str,
+        columns: List[str],
+        widths: List[int],
+        height: int
+    ) -> ttk.Treeview:
+        group = tk.LabelFrame(
+            parent,
+            text=title,
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            padx=4,
+            pady=4
+        )
+        group.pack(fill=tk.X, pady=(0, 8))
+
+        tree = ttk.Treeview(group, columns=columns, show="headings", height=height)
+        for col, width in zip(columns, widths):
+            tree.heading(col, text=col)
+            tree.column(col, width=width, anchor="center")
+
+        tree.pack(fill=tk.X)
+        return tree
+
+    def _fmt(self, val: Optional[float], fmt: str = ".1f") -> str:
+        if val is None:
+            return "N/A"
+        try:
+            return f"{val:{fmt}}"
+        except Exception:
+            return str(val)
+
+    def _populate_tree(self, tree: ttk.Treeview, data: List[Tuple[str, ...]]):
+        for item in tree.get_children():
+            tree.delete(item)
+        for row in data:
+            tree.insert("", tk.END, values=row)
 
     def clear_display(self):
-        """Resets all parameter tables to N/A."""
         self.update_indices(SoundingIndices())
 
     def update_indices(self, indices: SoundingIndices):
-        """Populates parameter tables and threat risks with computed SoundingIndices."""
-        # 1. Threats
         threats = indices.get_threat_assessment()
 
-        self.lbl_ts_threat.setText(f"⚡ Thunderstorm: {threats['thunderstorm']['level']}")
-        self.lbl_ts_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 4px; color: #ffffff; background-color: {threats['thunderstorm']['color']}; border: 1px solid #000000; border-radius: 0px;")
+        self.lbl_ts_threat.config(
+            text=f"⚡ Thunderstorm: {threats['thunderstorm']['level']}",
+            bg=threats['thunderstorm']['color']
+        )
+        self.lbl_rain_threat.config(
+            text=f"🌧️ Heavy Rain: {threats['heavy_rain']['level']}",
+            bg=threats['heavy_rain']['color']
+        )
+        self.lbl_wind_threat.config(
+            text=f"🌪️ Wind Shear: {threats['wind_shear']['level']}",
+            bg=threats['wind_shear']['color']
+        )
 
-        self.lbl_rain_threat.setText(f"🌧️ Heavy Rain: {threats['heavy_rain']['level']}")
-        self.lbl_rain_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 4px; color: #ffffff; background-color: {threats['heavy_rain']['color']}; border: 1px solid #000000; border-radius: 0px;")
-
-        self.lbl_wind_threat.setText(f"🌪️ Wind Shear: {threats['wind_shear']['level']}")
-        self.lbl_wind_threat.setStyleSheet(f"font-weight: bold; font-size: 11px; padding: 4px; color: #ffffff; background-color: {threats['wind_shear']['color']}; border: 1px solid #000000; border-radius: 0px;")
-
-        # 2. Levels Table
         cbh_val = f"{self._fmt(indices.lcl_height_m, '.0f')} m ({self._fmt(indices.lcl_height_ft, '.0f')} ft)"
         levels_data = [
             ("Surface Temp", "-", f"{self._fmt(indices.surface_temp_c)} °C"),
@@ -356,79 +711,24 @@ class ParameterDisplayWidget(QWidget):
             ("LFC (Free Conv.)", f"{self._fmt(indices.lfc_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lfc_temp_c)} °C"),
             ("EL (Equilibrium)", f"{self._fmt(indices.el_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.el_temp_c)} °C"),
         ]
-        self._populate_table(self.table_levels, levels_data)
+        self._populate_tree(self.tree_levels, levels_data)
 
-        # 3. CAPE / CIN Table
         cape_data = [
             ("Surface-Based (SB)", self._fmt(indices.sb_cape, ".0f"), self._fmt(indices.sb_cin, ".0f")),
             ("Mixed-Layer (ML)", self._fmt(indices.ml_cape, ".0f"), self._fmt(indices.ml_cin, ".0f")),
             ("Most-Unstable (MU)", self._fmt(indices.mu_cape, ".0f"), self._fmt(indices.mu_cin, ".0f")),
         ]
-        self._populate_table(self.table_cape, cape_data)
+        self._populate_tree(self.tree_cape, cape_data)
 
-        # 4. Stability Indices Table
+        pwat_val = f"{self._fmt(indices.pwat_mm, '.1f')} mm ({self._fmt(indices.pwat_in, '.2f')} in)"
         indices_data = [
-            ("Precipitable Water (PWAT)", f"{self._fmt(indices.pwat_mm, '.1f')} mm", f"({self._fmt(indices.pwat_in, '.2f')} in)"),
-            ("K Index (KI)", self._fmt(indices.k_index, ".1f"), "°C"),
-            ("Total Totals (TT)", self._fmt(indices.total_totals, ".1f"), "°C"),
-            ("Lifted Index (LI)", self._fmt(indices.lifted_index, ".1f"), "°C"),
-            ("Showalter Index (SI)", self._fmt(indices.showalter_index, ".1f"), "°C"),
+            ("Precipitable Water (PWAT)", pwat_val, "mm / in"),
+            ("K-Index (KI)", self._fmt(indices.k_index), "°C"),
+            ("Total Totals (TT)", self._fmt(indices.total_totals), "°C"),
+            ("Lifted Index (LI)", self._fmt(indices.lifted_index), "°C"),
+            ("Showalter Index (SI)", self._fmt(indices.showalter_index), "°C"),
             ("SWEAT Index", self._fmt(indices.sweat_index, ".0f"), "-"),
-            ("0-1km SRH", self._fmt(indices.srh_0_1km, ".0f"), "m²/s²"),
-            ("0-3km SRH", self._fmt(indices.srh_0_3km, ".0f"), "m²/s²"),
+            ("Storm Rel. Helicity (0-1 km)", self._fmt(indices.srh_0_1km, ".0f"), "m²/s²"),
+            ("Storm Rel. Helicity (0-3 km)", self._fmt(indices.srh_0_3km, ".0f"), "m²/s²"),
         ]
-        self._populate_table(self.table_indices, indices_data)
-
-    def _fmt(self, val: Optional[float], fmt_spec: str = ".1f") -> str:
-        if val is None or np.isnan(val):
-            return "N/A"
-        return f"{val:{fmt_spec}}"
-
-    def _populate_table(self, table: QTableWidget, data: List[tuple]):
-        table.setRowCount(len(data))
-        for row, row_data in enumerate(data):
-            for col, item_text in enumerate(row_data):
-                item = QTableWidgetItem(str(item_text))
-                item.setTextAlignment(Qt.AlignCenter)
-                table.setItem(row, col, item)
-        row_height = 24
-        header_height = 28
-        total_height = header_height + (row_height * len(data)) + 6
-        table.setFixedHeight(total_height)
-
-
-class PlotCanvasWidget(QWidget):
-    """
-    Matplotlib Qt Canvas widget embedding Skew-T diagrams with navigation toolbar.
-    """
-    def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
-        self.canvas: Optional[FigureCanvas] = None
-        self.toolbar: Optional[NavigationToolbar] = None
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.lbl_placeholder = QLabel("Click 'Fetch & Plot Sounding' or 'Open Local CSV' to generate a Skew-T diagram.")
-        self.lbl_placeholder.setAlignment(Qt.AlignCenter)
-        self.lbl_placeholder.setStyleSheet("font-size: 12px; font-weight: bold; color: #555555;")
-        self.layout.addWidget(self.lbl_placeholder)
-
-    def set_figure(self, fig: plt.Figure):
-        """Replaces current canvas with the new figure."""
-        if self.lbl_placeholder:
-            self.layout.removeWidget(self.lbl_placeholder)
-            self.lbl_placeholder.deleteLater()
-            self.lbl_placeholder = None
-
-        if self.canvas:
-            self.layout.removeWidget(self.toolbar)
-            self.layout.removeWidget(self.canvas)
-            self.toolbar.deleteLater()
-            self.canvas.deleteLater()
-
-        self.canvas = FigureCanvas(fig)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        self.layout.addWidget(self.toolbar)
-        self.layout.addWidget(self.canvas)
-        self.canvas.draw()
+        self._populate_tree(self.tree_indices, indices_data)

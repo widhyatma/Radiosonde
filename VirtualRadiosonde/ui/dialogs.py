@@ -1,215 +1,251 @@
 """
-Dialogs Module for Virtual Radiosonde Plotter.
-Defines AboutDialog, ExportDialog, and high-contrast notification message boxes.
+Dialogs Module for Virtual Radiosonde Plotter (Tkinter).
+Defines AboutDialog, ExportDialog, and high-contrast message boxes with classic retro styling.
 """
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFileDialog, QComboBox, QSpinBox, QFormLayout, QMessageBox, QWidget
-)
+import tkinter as tk
+from tkinter import ttk, messagebox
+from typing import Optional, Tuple
+from .icon_utils import apply_window_icon
 
 
-def apply_dialog_style(dialog: QWidget):
-    """Applies classic Windows XP square & beveled styling to dialogs and message boxes."""
-    qss = """
-    QDialog, QMessageBox {
-        background-color: #ece9d8;
-        color: #000000;
-        font-family: 'Tahoma', 'Segoe UI', sans-serif;
-    }
-    QLabel {
-        color: #000000;
-        font-size: 11px;
-    }
-    QComboBox, QSpinBox {
-        border: 1px solid #7f9db9;
-        border-radius: 0px;
-        padding: 4px;
-        background-color: #ffffff;
-        color: #000000;
-    }
-    QComboBox:focus, QSpinBox:focus {
-        border: 1px solid #003c74;
-    }
-    QPushButton {
-        border: 2px outset #d4d0c8;
-        border-radius: 0px;
-        padding: 4px 14px;
-        background-color: #ece9d8;
-        color: #000000;
-        font-weight: normal;
-    }
-    QPushButton:hover {
-        background-color: #f5f4ea;
-    }
-    QPushButton:pressed {
-        border: 2px inset #d4d0c8;
-        background-color: #e2dfce;
-    }
-    """
-    dialog.setStyleSheet(qss)
+def show_error_dialog(parent: Optional[tk.Widget], title: str, message: str) -> None:
+    """Displays a standard error message box."""
+    messagebox.showerror(title, message, parent=parent)
 
 
-def show_error_dialog(parent: QWidget, title: str, message: str) -> None:
-    """Displays a classic high-contrast Qt error message box."""
-    msg_box = QMessageBox(parent)
-    apply_dialog_style(msg_box)
-    msg_box.setIcon(QMessageBox.Critical)
-    msg_box.setWindowTitle(title)
-    msg_box.setText(message)
-    msg_box.exec()
+def show_info_dialog(parent: Optional[tk.Widget], title: str, message: str) -> None:
+    """Displays a standard information message box."""
+    messagebox.showinfo(title, message, parent=parent)
 
 
-def show_info_dialog(parent: QWidget, title: str, message: str) -> None:
-    """Displays a classic high-contrast Qt information message box."""
-    msg_box = QMessageBox(parent)
-    apply_dialog_style(msg_box)
-    msg_box.setIcon(QMessageBox.Information)
-    msg_box.setWindowTitle(title)
-    msg_box.setText(message)
-    msg_box.exec()
-
-
-class AboutDialog(QDialog):
+class AboutDialog(tk.Toplevel):
     """
     About Dialog displaying Jerukagung Meteorologi organization information.
+    Styled with classic Windows XP neutral palette (#ece9d8, Tahoma).
     """
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: tk.Widget):
         super().__init__(parent)
-        self.setWindowTitle("About - Jerukagung Meteorologi")
-        self.setFixedSize(440, 310)
-        apply_dialog_style(self)
+        self.title("About - Jerukagung Meteorologi")
+        self.geometry("450x340")
+        self.resizable(False, False)
+        self.configure(bg="#ece9d8")
+        apply_window_icon(self)
+
+        # Make modal
+        self.transient(parent)
+        self.grab_set()
+
         self.init_ui()
+        self.center_window(parent)
+
+    def center_window(self, parent: tk.Widget):
+        self.update_idletasks()
+        try:
+            px = parent.winfo_rootx()
+            py = parent.winfo_rooty()
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            w = self.winfo_width()
+            h = self.winfo_height()
+            x = px + max(0, (pw - w) // 2)
+            y = py + max(0, (ph - h) // 2)
+            self.geometry(f"+{x}+{y}")
+        except Exception:
+            pass
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        container = tk.Frame(self, bg="#ece9d8", padx=16, pady=16)
+        container.pack(fill=tk.BOTH, expand=True)
 
-        lbl_app_name = QLabel("🌦️ Virtual Radiosonde Plotter")
-        lbl_app_name.setStyleSheet("font-size: 16px; font-weight: bold; color: #000080;")
-        lbl_app_name.setAlignment(Qt.AlignCenter)
+        lbl_app = tk.Label(
+            container,
+            text="🌦️ Virtual Radiosonde Plotter",
+            font=("Tahoma", 13, "bold"),
+            bg="#ece9d8",
+            fg="#000080"
+        )
+        lbl_app.pack(pady=(0, 4))
 
-        lbl_org = QLabel("Jerukagung Meteorologi")
-        lbl_org.setAlignment(Qt.AlignCenter)
-        lbl_org.setStyleSheet("color: #000000; font-size: 12px; font-weight: bold;")
+        lbl_org = tk.Label(
+            container,
+            text="Jerukagung Meteorologi",
+            font=("Tahoma", 10, "bold"),
+            bg="#ece9d8",
+            fg="#000000"
+        )
+        lbl_org.pack(pady=(0, 2))
 
-        lbl_version = QLabel("Version 1.0.0 (PySide6 / MetPy)")
-        lbl_version.setAlignment(Qt.AlignCenter)
-        lbl_version.setStyleSheet("color: #555555; font-size: 11px;")
+        lbl_ver = tk.Label(
+            container,
+            text="Version 1.0.0 (Tkinter / MetPy)",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#555555"
+        )
+        lbl_ver.pack(pady=(0, 10))
 
-        lbl_desc = QLabel(
+        desc_text = (
             "Aplikasi analisis termodinamika atmosfer dan visualisasi diagram Skew-T Log-P "
             "standar riset meteorologi.\n\n"
             "• Organisasi: Jerukagung Meteorologi\n"
             "• Core Engine: MetPy & Pint\n"
-            "• Visualisasi: Matplotlib Skew-T Log-P\n"
+            "• Visualisasi: Matplotlib Skew-T Log-P (TkAgg)\n"
             "• Sumber Data: ERA5 / Weather Model\n"
-            "• GUI Framework: PySide6 (Qt6)"
+            "• GUI Framework: Python Tkinter"
         )
-        lbl_desc.setWordWrap(True)
-        lbl_desc.setStyleSheet("margin-top: 8px; color: #000000; font-size: 11px; line-height: 1.4;")
+        lbl_desc = tk.Label(
+            container,
+            text=desc_text,
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            justify=tk.LEFT,
+            wraplength=410
+        )
+        lbl_desc.pack(fill=tk.X, expand=True, pady=(0, 14))
 
-        btn_close = QPushButton("Tutup")
-        btn_close.setMinimumWidth(100)
-        btn_close.setMinimumHeight(28)
-        btn_close.setStyleSheet("""
-            QPushButton {
-                border: 2px outset #d4d0c8;
-                border-radius: 0px;
-                padding: 4px 14px;
-                background-color: #ece9d8;
-                color: #000000;
-                font-weight: normal;
-            }
-            QPushButton:hover {
-                background-color: #f5f4ea;
-            }
-            QPushButton:pressed {
-                border: 2px inset #d4d0c8;
-                background-color: #e2dfce;
-            }
-        """)
-        btn_close.clicked.connect(self.accept)
-
-        layout.addWidget(lbl_app_name)
-        layout.addWidget(lbl_org)
-        layout.addWidget(lbl_version)
-        layout.addWidget(lbl_desc)
-        layout.addStretch()
-        layout.addWidget(btn_close, alignment=Qt.AlignCenter)
+        btn_close = tk.Button(
+            container,
+            text="Tutup",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            activebackground="#f5f4ea",
+            relief=tk.RAISED,
+            bd=2,
+            width=12,
+            pady=2,
+            command=self.destroy
+        )
+        btn_close.pack()
 
 
-class ExportDialog(QDialog):
+class ExportDialog(tk.Toplevel):
     """
     Dialog for configuring image export settings (PNG, PDF, SVG, DPI).
     """
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: tk.Widget):
         super().__init__(parent)
-        self.setWindowTitle("Export Skew-T Figure")
-        self.setFixedSize(380, 220)
+        self.title("Export Skew-T Figure")
+        self.geometry("380x200")
+        self.resizable(False, False)
+        self.configure(bg="#ece9d8")
+        apply_window_icon(self)
 
-        self.export_format = "PNG"
-        self.export_dpi = 300
+        self.result: Optional[Tuple[str, int]] = None
 
-        apply_dialog_style(self)
+        self.transient(parent)
+        self.grab_set()
+
         self.init_ui()
+        self.center_window(parent)
+
+    def center_window(self, parent: tk.Widget):
+        self.update_idletasks()
+        try:
+            px = parent.winfo_rootx()
+            py = parent.winfo_rooty()
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            w = self.winfo_width()
+            h = self.winfo_height()
+            x = px + max(0, (pw - w) // 2)
+            y = py + max(0, (ph - h) // 2)
+            self.geometry(f"+{x}+{y}")
+        except Exception:
+            pass
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(14)
+        container = tk.Frame(self, bg="#ece9d8", padx=16, pady=14)
+        container.pack(fill=tk.BOTH, expand=True)
 
-        lbl_title = QLabel("💾 Export Settings")
-        lbl_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #000080;")
-        layout.addWidget(lbl_title)
+        lbl_title = tk.Label(
+            container,
+            text="💾 Export Settings",
+            font=("Tahoma", 11, "bold"),
+            bg="#ece9d8",
+            fg="#000080"
+        )
+        lbl_title.pack(anchor="w", pady=(0, 10))
 
-        form = QFormLayout()
-        form.setSpacing(10)
+        form_frame = tk.Frame(container, bg="#ece9d8")
+        form_frame.pack(fill=tk.X, expand=True)
 
-        self.combo_format = QComboBox()
-        self.combo_format.addItems(["PNG Image (*.png)", "PDF Document (*.pdf)", "SVG Vector (*.svg)"])
+        tk.Label(form_frame, text="Format Gambar:", font=("Tahoma", 9, "bold"), bg="#ece9d8", fg="#000000").grid(
+            row=0, column=0, sticky="w", pady=6
+        )
+        self.combo_format = ttk.Combobox(
+            form_frame,
+            values=["PNG Image (*.png)", "PDF Document (*.pdf)", "SVG Vector (*.svg)"],
+            state="readonly",
+            width=22,
+            font=("Tahoma", 9)
+        )
+        self.combo_format.current(0)
+        self.combo_format.grid(row=0, column=1, sticky="e", padx=(10, 0), pady=6)
 
-        self.spin_dpi = QSpinBox()
-        self.spin_dpi.setRange(72, 600)
-        self.spin_dpi.setValue(300)
-        self.spin_dpi.setSingleStep(50)
+        tk.Label(form_frame, text="Resolusi (DPI):", font=("Tahoma", 9, "bold"), bg="#ece9d8", fg="#000000").grid(
+            row=1, column=0, sticky="w", pady=6
+        )
+        self.spin_dpi = ttk.Spinbox(
+            form_frame,
+            from_=72,
+            to=600,
+            increment=50,
+            width=21,
+            font=("Tahoma", 9)
+        )
+        self.spin_dpi.set(300)
+        self.spin_dpi.grid(row=1, column=1, sticky="e", padx=(10, 0), pady=6)
 
-        lbl_fmt = QLabel("Format Gambar:")
-        lbl_fmt.setStyleSheet("color: #000000; font-weight: bold;")
-        lbl_dpi = QLabel("Resolusi (DPI):")
-        lbl_dpi.setStyleSheet("color: #000000; font-weight: bold;")
+        # Buttons
+        btn_frame = tk.Frame(container, bg="#ece9d8")
+        btn_frame.pack(fill=tk.X, pady=(16, 0))
 
-        form.addRow(lbl_fmt, self.combo_format)
-        form.addRow(lbl_dpi, self.spin_dpi)
+        btn_cancel = tk.Button(
+            btn_frame,
+            text="Batal",
+            font=("Tahoma", 9),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            width=10,
+            command=self.destroy
+        )
+        btn_cancel.pack(side=tk.RIGHT, padx=(6, 0))
 
-        layout.addLayout(form)
+        btn_save = tk.Button(
+            btn_frame,
+            text="Simpan...",
+            font=("Tahoma", 9, "bold"),
+            bg="#ece9d8",
+            fg="#000000",
+            relief=tk.RAISED,
+            bd=2,
+            width=10,
+            command=self.on_save
+        )
+        btn_save.pack(side=tk.RIGHT)
 
-        btn_box = QHBoxLayout()
-        btn_cancel = QPushButton("Batal")
-        btn_cancel.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; background-color: #ece9d8; color: #000000; font-weight: normal; padding: 4px 14px;")
-
-        btn_save = QPushButton("Simpan...")
-        btn_save.setDefault(True)
-        btn_save.setStyleSheet("border: 2px outset #d4d0c8; border-radius: 0px; background-color: #ece9d8; color: #000000; font-weight: bold; padding: 4px 14px;")
-
-        btn_cancel.clicked.connect(self.reject)
-        btn_save.clicked.connect(self.accept)
-
-        btn_box.addWidget(btn_cancel)
-        btn_box.addWidget(btn_save)
-
-        layout.addStretch()
-        layout.addLayout(btn_box)
-
-    def get_settings(self) -> tuple[str, int]:
-        """Returns selected file format extension and DPI."""
-        fmt_text = self.combo_format.currentText()
+    def on_save(self):
+        fmt_text = self.combo_format.get()
         if "pdf" in fmt_text:
             ext = "pdf"
         elif "svg" in fmt_text:
             ext = "svg"
         else:
             ext = "png"
-        return ext, self.spin_dpi.value()
+
+        try:
+            dpi = int(self.spin_dpi.get())
+        except ValueError:
+            dpi = 300
+
+        self.result = (ext, dpi)
+        self.destroy()
+
+    def get_settings(self) -> Optional[Tuple[str, int]]:
+        self.wait_window()
+        return self.result
