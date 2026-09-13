@@ -162,7 +162,7 @@ class ExportDialog(tk.Toplevel):
 
         lbl_title = tk.Label(
             container,
-            text="💾 Export Settings",
+            text="Export Settings",
             font=("Tahoma", 11, "bold"),
             bg="#ece9d8",
             fg="#000080"

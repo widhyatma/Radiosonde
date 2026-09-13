@@ -37,11 +37,15 @@ class CalendarPopupWidget(tk.Toplevel):
             self.current_year = parts[0]
             self.current_month = parts[1]
             self.selected_day = parts[2]
+            self.selected_year = parts[0]
+            self.selected_month = parts[1]
         except Exception:
             today = datetime.date.today()
             self.current_year = today.year
             self.current_month = today.month
             self.selected_day = today.day
+            self.selected_year = today.year
+            self.selected_month = today.month
 
         # Make popup transient
         self.transient(parent)
@@ -73,9 +77,12 @@ class CalendarPopupWidget(tk.Toplevel):
             font=("Tahoma", 9, "bold"),
             bg="#ece9d8",
             fg="#000000",
+            activebackground="#d4d0c8",
+            activeforeground="#000000",
             relief=tk.RAISED,
             bd=2,
             width=2,
+            cursor="hand2",
             command=self.prev_month
         )
         btn_prev.pack(side=tk.LEFT, padx=2, pady=2)
@@ -95,9 +102,12 @@ class CalendarPopupWidget(tk.Toplevel):
             font=("Tahoma", 9, "bold"),
             bg="#ece9d8",
             fg="#000000",
+            activebackground="#d4d0c8",
+            activeforeground="#000000",
             relief=tk.RAISED,
             bd=2,
             width=2,
+            cursor="hand2",
             command=self.next_month
         )
         btn_next.pack(side=tk.RIGHT, padx=2, pady=2)
@@ -143,7 +153,11 @@ class CalendarPopupWidget(tk.Toplevel):
                     lbl_empty = tk.Label(self.grid_frame, text="", bg="#ffffff", width=4, height=1)
                     lbl_empty.grid(row=r, column=c, padx=1, pady=1)
                 else:
-                    is_selected = (day == self.selected_day)
+                    is_selected = (
+                        day == self.selected_day and
+                        self.current_year == self.selected_year and
+                        self.current_month == self.selected_month
+                    )
                     bg_col = "#316ac5" if is_selected else "#ffffff"
                     fg_col = "#ffffff" if is_selected else ("#cc0000" if c == 0 else ("#0000ff" if c == 6 else "#000000"))
 
@@ -153,14 +167,18 @@ class CalendarPopupWidget(tk.Toplevel):
                         font=("Tahoma", 8, "bold" if is_selected else "normal"),
                         bg=bg_col,
                         fg=fg_col,
-                        activebackground="#316ac5",
-                        activeforeground="#ffffff",
-                        relief=tk.FLAT if is_selected else tk.GROOVE,
+                        activebackground="#215dc6" if is_selected else "#b5d5ff",
+                        activeforeground="#ffffff" if is_selected else "#000000",
+                        relief=tk.SUNKEN if is_selected else tk.RAISED,
                         bd=1,
                         width=3,
                         cursor="hand2",
                         command=lambda d=day: self.on_day_clicked(d)
                     )
+                    if not is_selected:
+                        btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#dbeafc"))
+                        btn.bind("<Leave>", lambda e, b=btn, bg=bg_col: b.config(bg=bg))
+
                     btn.grid(row=r, column=c, padx=1, pady=1)
 
     def prev_month(self):
@@ -180,9 +198,17 @@ class CalendarPopupWidget(tk.Toplevel):
         self.render_calendar_days()
 
     def on_day_clicked(self, day: int):
+        if getattr(self, "_closing", False):
+            return
+        self._closing = True
+        self.selected_day = day
+        self.selected_year = self.current_year
+        self.selected_month = self.current_month
+        self.render_calendar_days()
+
         date_str = f"{self.current_year:04d}-{self.current_month:02d}-{day:02d}"
         self.on_date_selected(date_str)
-        self.destroy()
+        self.after(120, self.destroy)
 
 
 class ControlPanelWidget(tk.Frame):
@@ -329,10 +355,13 @@ class ControlPanelWidget(tk.Frame):
             font=("Tahoma", 7),
             bg="#ece9d8",
             fg="#000000",
+            activebackground="#d4d0c8",
+            activeforeground="#000000",
             relief=tk.RAISED,
             bd=2,
             padx=2,
             pady=0,
+            cursor="hand2",
             command=self.open_calendar
         )
         self.btn_calendar.pack(side=tk.RIGHT)
