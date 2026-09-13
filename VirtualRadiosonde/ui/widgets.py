@@ -213,7 +213,7 @@ class ControlPanelWidget(tk.Frame):
         on_export_csv: Callable[[], None],
         on_search_city: Callable[[str], None]
     ):
-        super().__init__(parent, bg="#ece9d8", padx=8, pady=8)
+        super().__init__(parent, bg="#ece9d8", padx=4, pady=4)
         self.on_fetch = on_fetch
         self.on_open_csv = on_open_csv
         self.on_save_figure = on_save_figure
@@ -227,41 +227,41 @@ class ControlPanelWidget(tk.Frame):
         lbl_title = tk.Label(
             self,
             text="Configuration",
-            font=("Tahoma", 11, "bold"),
+            font=("Tahoma", 10, "bold"),
             bg="#ece9d8",
             fg="#000080"
         )
-        lbl_title.pack(anchor="w", pady=(0, 6))
+        lbl_title.pack(anchor="w", pady=(0, 4))
 
         # 2. City Search Box Group
         group_search = tk.LabelFrame(
             self,
             text="City Search & Presets",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
-            padx=6,
-            pady=6
+            padx=4,
+            pady=4
         )
-        group_search.pack(fill=tk.X, pady=(0, 8))
+        group_search.pack(fill=tk.X, pady=(0, 6))
 
         search_bar = tk.Frame(group_search, bg="#ece9d8")
-        search_bar.pack(fill=tk.X, pady=(0, 4))
+        search_bar.pack(fill=tk.X, pady=(0, 3))
 
-        self.txt_city_search = ttk.Entry(search_bar, font=("Tahoma", 9))
-        self.txt_city_search.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
+        self.txt_city_search = ttk.Entry(search_bar, font=("Tahoma", 8), width=13)
+        self.txt_city_search.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
         self.txt_city_search.insert(0, "Kebumen")
         self.txt_city_search.bind("<Return>", lambda e: self.do_search())
 
         self.btn_search_city = tk.Button(
             search_bar,
             text="Search",
-            font=("Tahoma", 9),
+            font=("Tahoma", 8),
             bg="#ece9d8",
             fg="#000000",
             relief=tk.RAISED,
             bd=2,
-            padx=6,
+            padx=4,
             command=self.do_search
         )
         self.btn_search_city.pack(side=tk.RIGHT)
@@ -273,7 +273,8 @@ class ControlPanelWidget(tk.Frame):
             group_search,
             values=preset_names,
             state="readonly",
-            font=("Tahoma", 9)
+            font=("Tahoma", 8),
+            width=23
         )
         self.combo_presets.current(1)  # Default Kebumen
         self.combo_presets.pack(fill=tk.X, pady=(2, 0))
@@ -283,143 +284,144 @@ class ControlPanelWidget(tk.Frame):
         group_input = tk.LabelFrame(
             self,
             text="Target Sounding Settings",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
-            padx=6,
-            pady=6
+            padx=4,
+            pady=4
         )
-        group_input.pack(fill=tk.X, pady=(0, 8))
+        group_input.pack(fill=tk.X, pady=(0, 6))
 
         form = tk.Frame(group_input, bg="#ece9d8")
         form.pack(fill=tk.X)
 
         # Latitude
-        tk.Label(form, text="Latitude (°):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=0, column=0, sticky="w", pady=3)
-        self.spin_lat = ttk.Spinbox(form, from_=-90.0, to=90.0, increment=0.1, font=("Tahoma", 9), width=16)
+        tk.Label(form, text="Latitude (°):", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").grid(row=0, column=0, sticky="w", pady=2)
+        self.spin_lat = ttk.Spinbox(form, from_=-90.0, to=90.0, increment=0.1, font=("Tahoma", 8), width=11)
         self.spin_lat.set(-7.6686)
-        self.spin_lat.grid(row=0, column=1, sticky="e", pady=3)
+        self.spin_lat.grid(row=0, column=1, sticky="e", pady=2)
 
         # Longitude
-        tk.Label(form, text="Longitude (°):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=1, column=0, sticky="w", pady=3)
-        self.spin_lon = ttk.Spinbox(form, from_=-180.0, to=180.0, increment=0.1, font=("Tahoma", 9), width=16)
+        tk.Label(form, text="Longitude (°):", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").grid(row=1, column=0, sticky="w", pady=2)
+        self.spin_lon = ttk.Spinbox(form, from_=-180.0, to=180.0, increment=0.1, font=("Tahoma", 8), width=11)
         self.spin_lon.set(109.6536)
-        self.spin_lon.grid(row=1, column=1, sticky="e", pady=3)
+        self.spin_lon.grid(row=1, column=1, sticky="e", pady=2)
 
         # Location Name
-        tk.Label(form, text="Location Name:", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=2, column=0, sticky="w", pady=3)
-        self.txt_loc_name = ttk.Entry(form, font=("Tahoma", 9), width=18)
+        tk.Label(form, text="Location Name:", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").grid(row=2, column=0, sticky="w", pady=2)
+        self.txt_loc_name = ttk.Entry(form, font=("Tahoma", 8), width=12)
         self.txt_loc_name.insert(0, "Kebumen")
-        self.txt_loc_name.grid(row=2, column=1, sticky="e", pady=3)
+        self.txt_loc_name.grid(row=2, column=1, sticky="e", pady=2)
 
         # Date Picker with Popup button
-        tk.Label(form, text="Date (UTC):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=3, column=0, sticky="w", pady=3)
+        tk.Label(form, text="Date (UTC):", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").grid(row=3, column=0, sticky="w", pady=2)
         date_bar = tk.Frame(form, bg="#ece9d8")
-        date_bar.grid(row=3, column=1, sticky="e", pady=3)
+        date_bar.grid(row=3, column=1, sticky="e", pady=2)
 
         today_str = datetime.date.today().strftime("%Y-%m-%d")
-        self.txt_date = ttk.Entry(date_bar, font=("Tahoma", 9), width=12)
+        self.txt_date = ttk.Entry(date_bar, font=("Tahoma", 8), width=9)
         self.txt_date.insert(0, today_str)
         self.txt_date.pack(side=tk.LEFT, padx=(0, 2))
 
         self.btn_calendar = tk.Button(
             date_bar,
             text="📅",
-            font=("Tahoma", 8),
+            font=("Tahoma", 7),
             bg="#ece9d8",
             fg="#000000",
             relief=tk.RAISED,
             bd=2,
-            padx=3,
+            padx=2,
+            pady=0,
             command=self.open_calendar
         )
         self.btn_calendar.pack(side=tk.RIGHT)
 
         # Time UTC
-        tk.Label(form, text="Time (UTC):", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=4, column=0, sticky="w", pady=3)
+        tk.Label(form, text="Time (UTC):", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").grid(row=4, column=0, sticky="w", pady=2)
         self.combo_utc_hour = ttk.Combobox(
             form,
             values=["00:00 UTC", "06:00 UTC", "12:00 UTC", "18:00 UTC"],
             state="readonly",
-            font=("Tahoma", 9),
-            width=16
+            font=("Tahoma", 8),
+            width=11
         )
         self.combo_utc_hour.current(2)  # Default 12:00 UTC
-        self.combo_utc_hour.grid(row=4, column=1, sticky="e", pady=3)
+        self.combo_utc_hour.grid(row=4, column=1, sticky="e", pady=2)
 
         # Data Source
-        tk.Label(form, text="Data Source:", font=("Tahoma", 9), bg="#ece9d8", fg="#000000").grid(row=5, column=0, sticky="w", pady=3)
+        tk.Label(form, text="Data Source:", font=("Tahoma", 8), bg="#ece9d8", fg="#000000").grid(row=5, column=0, sticky="w", pady=2)
         self.combo_source = ttk.Combobox(
             form,
             values=["ERA5", "GFS", "Radiosonde Observation"],
             state="readonly",
-            font=("Tahoma", 9),
-            width=16
+            font=("Tahoma", 8),
+            width=11
         )
         self.combo_source.current(0)
-        self.combo_source.grid(row=5, column=1, sticky="e", pady=3)
+        self.combo_source.grid(row=5, column=1, sticky="e", pady=2)
 
         # 4. Action Buttons Group
         group_actions = tk.LabelFrame(
             self,
             text="Actions",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
-            padx=6,
-            pady=6
+            padx=4,
+            pady=4
         )
-        group_actions.pack(fill=tk.X, pady=(0, 4))
+        group_actions.pack(fill=tk.X, pady=(0, 3))
 
         self.btn_download = tk.Button(
             group_actions,
             text="Fetch & Plot Sounding",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
             activebackground="#f5f4ea",
             relief=tk.RAISED,
             bd=2,
-            pady=5,
+            pady=4,
             command=self.on_fetch_clicked
         )
-        self.btn_download.pack(fill=tk.X, pady=(0, 6))
+        self.btn_download.pack(fill=tk.X, pady=(0, 4))
 
         self.btn_open_csv = tk.Button(
             group_actions,
             text="Open Local CSV",
-            font=("Tahoma", 9),
+            font=("Tahoma", 8),
             bg="#ece9d8",
             fg="#000000",
             relief=tk.RAISED,
             bd=2,
-            pady=3,
+            pady=2,
             command=self.on_open_csv
         )
-        self.btn_open_csv.pack(fill=tk.X, pady=(0, 4))
+        self.btn_open_csv.pack(fill=tk.X, pady=(0, 3))
 
         self.btn_save_fig = tk.Button(
             group_actions,
             text="Save Figure (PNG / PDF)",
-            font=("Tahoma", 9),
+            font=("Tahoma", 8),
             bg="#ece9d8",
             fg="#000000",
             relief=tk.RAISED,
             bd=2,
-            pady=3,
+            pady=2,
             command=self.on_save_figure
         )
-        self.btn_save_fig.pack(fill=tk.X, pady=(0, 4))
+        self.btn_save_fig.pack(fill=tk.X, pady=(0, 3))
 
         self.btn_export_csv = tk.Button(
             group_actions,
             text="Export CSV Data",
-            font=("Tahoma", 9),
+            font=("Tahoma", 8),
             bg="#ece9d8",
             fg="#000000",
             relief=tk.RAISED,
             bd=2,
-            pady=3,
+            pady=2,
             command=self.on_export_csv
         )
         self.btn_export_csv.pack(fill=tk.X)
@@ -518,7 +520,7 @@ class ParameterDisplayWidget(tk.Frame):
     Right panel widget displaying meteorological sounding indices, key levels, and severe risk badges.
     """
     def __init__(self, parent: tk.Widget, on_copy_summary: Callable[[], None]):
-        super().__init__(parent, bg="#ece9d8", padx=6, pady=6)
+        super().__init__(parent, bg="#ece9d8", padx=4, pady=4)
         self.on_copy_summary = on_copy_summary
 
         self.init_ui()
@@ -527,17 +529,17 @@ class ParameterDisplayWidget(tk.Frame):
         lbl_title = tk.Label(
             self,
             text="Sounding Parameters",
-            font=("Tahoma", 11, "bold"),
+            font=("Tahoma", 10, "bold"),
             bg="#ece9d8",
             fg="#000080"
         )
-        lbl_title.pack(anchor="w", pady=(0, 6))
+        lbl_title.pack(anchor="w", pady=(0, 4))
 
         # Canvas with Scrollbar for vertical scrolling
         container = tk.Frame(self, bg="#ece9d8")
         container.pack(fill=tk.BOTH, expand=True)
 
-        canvas = tk.Canvas(container, bg="#ece9d8", highlightthickness=0)
+        canvas = tk.Canvas(container, bg="#ece9d8", highlightthickness=0, width=225)
         scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
         self.scroll_content = tk.Frame(canvas, bg="#ece9d8")
 
@@ -545,8 +547,8 @@ class ParameterDisplayWidget(tk.Frame):
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
-        canvas.create_window((0, 0), window=self.scroll_content, anchor="nw")
-        canvas.configure(xscrollcommand=scrollbar.set, yscrollcommand=scrollbar.set)
+        canvas.create_window((0, 0), window=self.scroll_content, anchor="nw", width=225)
+        canvas.configure(yscrollcommand=scrollbar.set)
 
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -555,47 +557,47 @@ class ParameterDisplayWidget(tk.Frame):
         group_threat = tk.LabelFrame(
             self.scroll_content,
             text="Severe Weather Threat Risk",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
-            padx=6,
-            pady=6
+            padx=4,
+            pady=4
         )
-        group_threat.pack(fill=tk.X, pady=(0, 8))
+        group_threat.pack(fill=tk.X, pady=(0, 6))
 
         self.lbl_ts_threat = tk.Label(
             group_threat,
             text="⚡ Thunderstorm: N/A",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#10b981",
             fg="#ffffff",
             relief=tk.SOLID,
             bd=1,
-            pady=3
+            pady=2
         )
         self.lbl_ts_threat.pack(fill=tk.X, pady=2)
 
         self.lbl_rain_threat = tk.Label(
             group_threat,
             text="🌧️ Heavy Rain: N/A",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#10b981",
             fg="#ffffff",
             relief=tk.SOLID,
             bd=1,
-            pady=3
+            pady=2
         )
         self.lbl_rain_threat.pack(fill=tk.X, pady=2)
 
         self.lbl_wind_threat = tk.Label(
             group_threat,
             text="🌪️ Wind Shear: N/A",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#10b981",
             fg="#ffffff",
             relief=tk.SOLID,
             bd=1,
-            pady=3
+            pady=2
         )
         self.lbl_wind_threat.pack(fill=tk.X, pady=2)
 
@@ -603,8 +605,8 @@ class ParameterDisplayWidget(tk.Frame):
         self.tree_levels = self._create_param_tree(
             self.scroll_content,
             "Surface & Lifted Levels",
-            ["Parameter", "Pressure", "Value"],
-            [100, 70, 90],
+            ["Param", "Level", "Value"],
+            [76, 52, 74],
             6
         )
 
@@ -612,8 +614,8 @@ class ParameterDisplayWidget(tk.Frame):
         self.tree_cape = self._create_param_tree(
             self.scroll_content,
             "Convective Energy",
-            ["Parcel Type", "CAPE (J/kg)", "CIN (J/kg)"],
-            [110, 75, 75],
+            ["Parcel", "CAPE", "CIN"],
+            [80, 58, 58],
             3
         )
 
@@ -621,8 +623,8 @@ class ParameterDisplayWidget(tk.Frame):
         self.tree_indices = self._create_param_tree(
             self.scroll_content,
             "Stability & Severe Indices",
-            ["Stability Index", "Value", "Unit"],
-            [110, 75, 75],
+            ["Index", "Value", "Unit"],
+            [94, 56, 44],
             8
         )
 
@@ -630,15 +632,15 @@ class ParameterDisplayWidget(tk.Frame):
         self.btn_copy_summary = tk.Button(
             self.scroll_content,
             text="📋 Copy Summary Text",
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
             relief=tk.RAISED,
             bd=2,
-            pady=4,
+            pady=3,
             command=self.on_copy_summary
         )
-        self.btn_copy_summary.pack(fill=tk.X, pady=(6, 4))
+        self.btn_copy_summary.pack(fill=tk.X, pady=(4, 4))
 
         self.clear_display()
 
@@ -653,13 +655,13 @@ class ParameterDisplayWidget(tk.Frame):
         group = tk.LabelFrame(
             parent,
             text=title,
-            font=("Tahoma", 9, "bold"),
+            font=("Tahoma", 8, "bold"),
             bg="#ece9d8",
             fg="#000000",
-            padx=4,
-            pady=4
+            padx=2,
+            pady=2
         )
-        group.pack(fill=tk.X, pady=(0, 8))
+        group.pack(fill=tk.X, pady=(0, 6))
 
         tree = ttk.Treeview(group, columns=columns, show="headings", height=height)
         for col, width in zip(columns, widths):
@@ -702,33 +704,33 @@ class ParameterDisplayWidget(tk.Frame):
             bg=threats['wind_shear']['color']
         )
 
-        cbh_val = f"{self._fmt(indices.lcl_height_m, '.0f')} m ({self._fmt(indices.lcl_height_ft, '.0f')} ft)"
+        cbh_val = f"{self._fmt(indices.lcl_height_m, '.0f')} m"
         levels_data = [
-            ("Surface Temp", "-", f"{self._fmt(indices.surface_temp_c)} °C"),
-            ("Surface Dewpoint", "-", f"{self._fmt(indices.surface_dewpoint_c)} °C"),
-            ("LCL (Lifted Cond.)", f"{self._fmt(indices.lcl_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lcl_temp_c)} °C"),
-            ("Cloud Base Height", f"{self._fmt(indices.lcl_pressure_hpa, '.0f')} hPa", cbh_val),
-            ("LFC (Free Conv.)", f"{self._fmt(indices.lfc_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lfc_temp_c)} °C"),
-            ("EL (Equilibrium)", f"{self._fmt(indices.el_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.el_temp_c)} °C"),
+            ("Sfc Temp", "-", f"{self._fmt(indices.surface_temp_c)} °C"),
+            ("Sfc Dewpt", "-", f"{self._fmt(indices.surface_dewpoint_c)} °C"),
+            ("LCL", f"{self._fmt(indices.lcl_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lcl_temp_c)} °C"),
+            ("Cloud Base", f"{self._fmt(indices.lcl_pressure_hpa, '.0f')} hPa", cbh_val),
+            ("LFC", f"{self._fmt(indices.lfc_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.lfc_temp_c)} °C"),
+            ("EL", f"{self._fmt(indices.el_pressure_hpa, '.0f')} hPa", f"{self._fmt(indices.el_temp_c)} °C"),
         ]
         self._populate_tree(self.tree_levels, levels_data)
 
         cape_data = [
-            ("Surface-Based (SB)", self._fmt(indices.sb_cape, ".0f"), self._fmt(indices.sb_cin, ".0f")),
-            ("Mixed-Layer (ML)", self._fmt(indices.ml_cape, ".0f"), self._fmt(indices.ml_cin, ".0f")),
-            ("Most-Unstable (MU)", self._fmt(indices.mu_cape, ".0f"), self._fmt(indices.mu_cin, ".0f")),
+            ("Surface (SB)", self._fmt(indices.sb_cape, ".0f"), self._fmt(indices.sb_cin, ".0f")),
+            ("Mixed (ML)", self._fmt(indices.ml_cape, ".0f"), self._fmt(indices.ml_cin, ".0f")),
+            ("Unstable (MU)", self._fmt(indices.mu_cape, ".0f"), self._fmt(indices.mu_cin, ".0f")),
         ]
         self._populate_tree(self.tree_cape, cape_data)
 
-        pwat_val = f"{self._fmt(indices.pwat_mm, '.1f')} mm ({self._fmt(indices.pwat_in, '.2f')} in)"
+        pwat_val = f"{self._fmt(indices.pwat_mm, '.1f')} mm"
         indices_data = [
-            ("Precipitable Water (PWAT)", pwat_val, "mm / in"),
-            ("K-Index (KI)", self._fmt(indices.k_index), "°C"),
-            ("Total Totals (TT)", self._fmt(indices.total_totals), "°C"),
-            ("Lifted Index (LI)", self._fmt(indices.lifted_index), "°C"),
-            ("Showalter Index (SI)", self._fmt(indices.showalter_index), "°C"),
+            ("PWAT", pwat_val, "mm"),
+            ("K-Index", self._fmt(indices.k_index), "°C"),
+            ("Total Totals", self._fmt(indices.total_totals), "°C"),
+            ("Lifted Index", self._fmt(indices.lifted_index), "°C"),
+            ("Showalter", self._fmt(indices.showalter_index), "°C"),
             ("SWEAT Index", self._fmt(indices.sweat_index, ".0f"), "-"),
-            ("Storm Rel. Helicity (0-1 km)", self._fmt(indices.srh_0_1km, ".0f"), "m²/s²"),
-            ("Storm Rel. Helicity (0-3 km)", self._fmt(indices.srh_0_3km, ".0f"), "m²/s²"),
+            ("SRH (0-1 km)", self._fmt(indices.srh_0_1km, ".0f"), "m²/s²"),
+            ("SRH (0-3 km)", self._fmt(indices.srh_0_3km, ".0f"), "m²/s²"),
         ]
         self._populate_tree(self.tree_indices, indices_data)

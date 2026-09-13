@@ -25,8 +25,8 @@ class MainWindow:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Virtual Radiosonde Plotter")
-        self.root.geometry("1280x800")
-        self.root.minsize(960, 600)
+        self.root.geometry("1366x820")
+        self.root.minsize(1050, 650)
         self.root.configure(bg="#ece9d8")
 
         apply_window_icon(self.root)
@@ -66,30 +66,33 @@ class MainWindow:
 
     def init_ui(self):
         # Top Container with PanedWindow Splitter
-        main_paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
-        main_paned.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+        self.main_paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+        self.main_paned.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
-        # 1. Left Control Panel
+        # 1. Left Control Panel (Fixed compact width, weight=0)
         self.control_panel = ControlPanelWidget(
-            parent=main_paned,
+            parent=self.main_paned,
             on_fetch=self.start_fetch_sounding,
             on_open_csv=self.handle_open_csv,
             on_save_figure=self.save_figure,
             on_export_csv=self.export_csv,
             on_search_city=self.handle_city_search
         )
-        main_paned.add(self.control_panel, weight=1)
+        self.main_paned.add(self.control_panel, weight=0)
 
-        # 2. Center Plot Canvas
-        self.canvas_widget = PlotCanvasWidget(parent=main_paned)
-        main_paned.add(self.canvas_widget, weight=4)
+        # 2. Center Plot Canvas (Takes 100% of expanding width, weight=1)
+        self.canvas_widget = PlotCanvasWidget(parent=self.main_paned)
+        self.main_paned.add(self.canvas_widget, weight=1)
 
-        # 3. Right Parameter Panel
+        # 3. Right Parameter Panel (Fixed compact width, weight=0)
         self.param_panel = ParameterDisplayWidget(
-            parent=main_paned,
+            parent=self.main_paned,
             on_copy_summary=self.handle_copy_summary
         )
-        main_paned.add(self.param_panel, weight=1)
+        self.main_paned.add(self.param_panel, weight=0)
+
+        # Schedule initial sash positioning after window mapping
+        self.root.after(50, self._adjust_initial_sashes)
 
         # Bottom Status Bar
         status_frame = tk.Frame(self.root, bg="#ece9d8", bd=1, relief=tk.SUNKEN)
@@ -107,6 +110,21 @@ class MainWindow:
 
         self.progress_bar = ttk.Progressbar(status_frame, mode="indeterminate", length=150)
         # Hidden by default
+
+    def _adjust_initial_sashes(self):
+        """
+        Positions initial splitter sashes so the center Skew-T canvas receives maximum room (~870px+),
+        keeping left (~235px) and right (~245px) panels compact.
+        """
+        try:
+            total_w = self.main_paned.winfo_width()
+            if total_w > 600:
+                left_w = 235
+                right_w = 245
+                self.main_paned.sashpos(0, left_w)
+                self.main_paned.sashpos(1, total_w - right_w)
+        except Exception:
+            pass
 
     def set_status(self, text: str):
         self.lbl_status.config(text=text)

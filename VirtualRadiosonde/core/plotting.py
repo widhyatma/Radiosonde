@@ -46,7 +46,7 @@ class SkewTPlotter:
             box_text_color = "#212529"
 
         fig = plt.figure(figsize=fig_size, dpi=dpi, facecolor=bg_color)
-        gs = gridspec.GridSpec(1, 2, width_ratios=[3.2, 1.1], wspace=0.12)
+        gs = gridspec.GridSpec(1, 2, width_ratios=[3.4, 1.0], wspace=0.10)
 
         # --------------------------------------------------------
         # 1. MAIN SKEW-T LOG-P DIAGRAM
@@ -169,7 +169,7 @@ class SkewTPlotter:
         )
         fig.suptitle(title_header, fontsize=12, fontweight='bold', x=0.45, y=0.98, color=text_color)
 
-        fig.subplots_adjust(left=0.07, right=0.95, top=0.93, bottom=0.08, wspace=0.15)
+        fig.subplots_adjust(left=0.06, right=0.96, top=0.94, bottom=0.07, wspace=0.10)
         return fig
 
     @staticmethod
